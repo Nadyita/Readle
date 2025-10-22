@@ -1,0 +1,156 @@
+package com.readle.app.ui.viewmodel
+
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import app.cash.turbine.test
+import com.readle.app.data.model.BookEntity
+import com.readle.app.data.model.ReadingCategory
+import com.readle.app.data.repository.BookRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.mockito.Mock
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
+import org.mockito.MockitoAnnotations
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class BookListViewModelTest {
+
+    @get:Rule
+    val instantExecutorRule = InstantTaskExecutorRule()
+
+    @Mock
+    private lateinit var mockBookRepository: BookRepository
+
+    private lateinit var viewModel: BookListViewModel
+
+    private val testDispatcher = StandardTestDispatcher()
+
+    private val testBooks = listOf(
+        BookEntity(
+            id = 1,
+            title = "Book 1",
+            author = "Author 1",
+            category = ReadingCategory.WANT_TO_READ,
+            isRead = false,
+            rating = 0
+        ),
+        BookEntity(
+            id = 2,
+            title = "Book 2",
+            author = "Author 2",
+            category = ReadingCategory.WANT_TO_READ,
+            isRead = false,
+            rating = 0
+        )
+    )
+
+    @Before
+    fun setup() {
+        MockitoAnnotations.openMocks(this)
+        Dispatchers.setMain(testDispatcher)
+        `when`(mockBookRepository.getAllBooks()).thenReturn(flowOf(testBooks))
+        viewModel = BookListViewModel(mockBookRepository)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `initial state has WANT_TO_READ category selected`() = runTest {
+        viewModel.selectedCategory.test {
+            assertEquals(ReadingCategory.WANT_TO_READ, awaitItem())
+        }
+    }
+
+    @Test
+    fun `setCategory updates selected category`() = runTest {
+        viewModel.setCategory(ReadingCategory.READ)
+
+        viewModel.selectedCategory.test {
+            assertEquals(ReadingCategory.READ, awaitItem())
+        }
+    }
+
+    @Test
+    fun `setSearchQuery updates search query`() = runTest {
+        viewModel.setSearchQuery("Test")
+
+        viewModel.searchQuery.test {
+            assertEquals("Test", awaitItem())
+        }
+    }
+
+    @Test
+    fun `toggleBookSelection adds book to selection`() = runTest {
+        viewModel.toggleBookSelection(1)
+
+        viewModel.selectedBooks.test {
+            assertEquals(setOf(1L), awaitItem())
+        }
+    }
+
+    @Test
+    fun `toggleBookSelection removes book from selection when already selected`() = runTest {
+        viewModel.toggleBookSelection(1)
+        viewModel.toggleBookSelection(1)
+
+        viewModel.selectedBooks.test {
+            assertEquals(emptySet<Long>(), awaitItem())
+        }
+    }
+
+    @Test
+    fun `selectAllBooks selects all displayed books`() = runTest {
+        testDispatcher.scheduler.advanceUntilIdle()
+        viewModel.selectAllBooks()
+
+        viewModel.selectedBooks.test {
+            val selectedIds = awaitItem()
+            assertEquals(2, selectedIds.size)
+        }
+    }
+
+    @Test
+    fun `deselectAllBooks clears selection`() = runTest {
+        viewModel.toggleBookSelection(1)
+        viewModel.deselectAllBooks()
+
+        viewModel.selectedBooks.test {
+            assertEquals(emptySet<Long>(), awaitItem())
+        }
+    }
+
+    @Test
+    fun `deleteSelectedBooks calls repository deleteBooks`() = runTest {
+        viewModel.toggleBookSelection(1)
+        viewModel.toggleBookSelection(2)
+
+        viewModel.deleteSelectedBooks()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(mockBookRepository).deleteBooks(listOf(1L, 2L))
+    }
+
+    @Test
+    fun `deleteBook calls repository deleteBook`() = runTest {
+        val book = testBooks[0]
+
+        viewModel.deleteBook(book)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        verify(mockBookRepository).deleteBook(book)
+    }
+}
+

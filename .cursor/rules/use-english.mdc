@@ -1,0 +1,4 @@
+---
+alwaysApply: true
+---
+When working with code, all comments, documentation, and variable/function names, etc. must be in English, so as many people as possible can understand the code and the docs.

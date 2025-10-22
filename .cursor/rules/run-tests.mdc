@@ -1,0 +1,4 @@
+---
+alwaysApply: true
+---
+When changing code, only report you're done after you ran the corresponding tests with `./gradlew :app:testDebugUnitTest`

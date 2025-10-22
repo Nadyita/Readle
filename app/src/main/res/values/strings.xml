@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Readle</string>
+
+    <!-- Categories -->
+    <string name="category_want">Want</string>
+    <string name="category_own">Own</string>
+    <string name="category_read">Read</string>
+
+    <!-- Actions -->
+    <string name="action_add_book">Add Book</string>
+    <string name="action_edit_book">Edit Book</string>
+    <string name="action_delete_book">Delete Book</string>
+    <string name="action_delete_selected">Delete Selected</string>
+    <string name="action_search">Search</string>
+    <string name="action_scan_isbn">Scan ISBN</string>
+    <string name="action_enter_isbn">Enter ISBN</string>
+    <string name="action_search_title_author">Search by Title/Author</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_import">Import</string>
+    <string name="action_export">Export</string>
+    <string name="action_share_export">Share Export</string>
+    <string name="action_select_all">Select All</string>
+    <string name="label_selected">selected</string>
+    <string name="action_deselect_all">Deselect All</string>
+
+    <!-- Book fields -->
+    <string name="field_title">Title</string>
+    <string name="field_author">Author</string>
+    <string name="field_description">Description</string>
+    <string name="field_is_ebook">eBook</string>
+    <string name="field_comments">Comments</string>
+    <string name="field_publish_date">Publish Date</string>
+    <string name="field_language">Language</string>
+    <string name="field_original_language">Original Language</string>
+    <string name="field_series">Series</string>
+    <string name="field_series_number">Series #</string>
+    <string name="field_rating">Rating</string>
+    <string name="field_cover">Cover</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_scanner">Scanner Library</string>
+    <string name="settings_export_format">Export Format</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_system">System</string>
+    <string name="scanner_ml_kit">ML Kit</string>
+    <string name="scanner_zxing">ZXing</string>
+    <string name="format_json">JSON</string>
+    <string name="format_xml">XML</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_scanner">Scanner</string>
+    <string name="settings_section_apis">Book Search APIs</string>
+    <string name="settings_section_audiobookshelf">Audiobookshelf</string>
+    <string name="settings_section_pocketbook">PocketBook Cloud</string>
+    <string name="settings_section_data">Data Management</string>
+    <string name="action_sync_reading_progress">Sync Reading Progress</string>
+    <string name="msg_syncing_pocketbook">Syncing with PocketBook Cloud…</string>
+    <string name="error_pocketbook_timeout">PocketBook Cloud is not responding. Please try again later.</string>
+
+    <!-- Messages -->
+    <string name="msg_book_added">Book added</string>
+    <string name="msg_book_updated">Book updated</string>
+    <string name="msg_book_deleted">Book deleted</string>
+    <string name="msg_books_deleted">%d books deleted</string>
+    <string name="msg_no_books">No books in this category</string>
+    <string name="msg_loading">Loading…</string>
+    <string name="msg_error">An error occurred</string>
+    <string name="msg_no_results">No results found</string>
+    <string name="msg_export_success">Export successful</string>
+    <string name="msg_import_success">Import successful</string>
+    <string name="msg_camera_permission_required">Camera permission is required to scan barcodes</string>
+    <string name="msg_storage_permission_required">Storage permission is required</string>
+    <string name="msg_already_in_library">Already in library</string>
+
+    <!-- Dialogs -->
+    <string name="dialog_delete_title">Delete Book?</string>
+    <string name="dialog_delete_message">Are you sure you want to delete this book?</string>
+    <string name="dialog_delete_multiple_title">Delete Books?</string>
+    <string name="dialog_delete_multiple_message">Are you sure you want to delete %d books?</string>
+    <string name="dialog_import_mode_title">Import Mode</string>
+    <string name="dialog_import_mode_message">How should the imported data be handled?</string>
+    <string name="dialog_import_merge">Merge with existing books</string>
+    <string name="dialog_import_replace">Replace all books</string>
+    <string name="dialog_select_book_title">Select Book</string>
+    <string name="dialog_select_book_message">Multiple books found. Please select one:</string>
+
+    <!-- Search -->
+    <string name="search_hint">Search in known books</string>
+    <string name="search_isbn_hint">Enter ISBN</string>
+    <string name="hint_filter_category">Filter…</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_book_cover">Book cover</string>
+    <string name="cd_delete_book">Delete book</string>
+    <string name="cd_edit_book">Edit book</string>
+    <string name="cd_add_book">Add book</string>
+    <string name="cd_settings">Settings</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_more_options">More options</string>
+    <string name="cd_filter">Filter</string>
+    <string name="cd_clear_filter">Clear filter</string>
+
+    <!-- Additional UI labels -->
+    <string name="label_select_category">Select Category</string>
+    <string name="label_category">Category</string>
+    <string name="label_rating_label">Rating</string>
+    <string name="label_rating_optional">Rating (optional):</string>
+    <string name="label_current_status">Current Status:</string>
+    <string name="label_book_status">Book Status:</string>
+    <string name="label_import_export">Import/Export</string>
+    <string name="label_choose_category">Choose a category for this book:</string>
+    <string name="label_grant_permission">Grant Permission</string>
+    <string name="label_stars">%d stars</string>
+    <string name="label_current_category">Current Category:</string>
+    <string name="action_ok">OK</string>
+    
+    <!-- Filter labels -->
+    <string name="filter_all">All</string>
+    <string name="filter_yes">Yes</string>
+    <string name="filter_no">No</string>
+    <string name="filter_owned">Owned:</string>
+    <string name="filter_read">Read:</string>
+    
+    <!-- Upload/Reupload -->
+    <string name="dialog_reupload_title">Resend Book?</string>
+    <string name="dialog_reupload_single">This book has already been sent to your Pocketbook. Do you really want to send it again?</string>
+    <string name="dialog_reupload_multiple">%d books have already been sent to your Pocketbook. Do you really want to send them again?</string>
+    <string name="action_resend">Yes, Resend</string>
+    <string name="dialog_upload_title">Uploading to Pocketbook</string>
+    <string name="msg_uploading_book">Uploading book %1$d of %2$d</string>
+    
+    <!-- Audiobookshelf -->
+    <string name="abs_server_url">Server URL</string>
+    <string name="abs_server_url_hint">https://abs.example.com</string>
+    <string name="abs_login">Login to Audiobookshelf</string>
+    <string name="abs_logout">Logout</string>
+    <string name="abs_username">Username</string>
+    <string name="abs_password">Password</string>
+    <string name="abs_login_title">Audiobookshelf Login</string>
+    <string name="abs_connected">Connected</string>
+    <string name="abs_not_configured">Not configured</string>
+    <string name="abs_status">Status: %s</string>
+    <string name="abs_import_books">Import eBooks from Audiobookshelf</string>
+    <string name="abs_import_success">Imported %1$d new books, updated %2$d existing books (%3$d total)</string>
+    <string name="abs_import_in_progress">Importing eBooks from Audiobookshelf…</string>
+    <string name="dialog_unmatched_books_title">Unmatched Books Found</string>
+    
+    <!-- PocketBook -->
+    <string name="pocketbook_email">Email</string>
+    <string name="pocketbook_email_hint">your.email@example.com</string>
+    <string name="pocketbook_password">Password</string>
+    <string name="pocketbook_password_hint">Your password</string>
+    <string name="action_save_credentials">Save Credentials</string>
+    <string name="action_save_server_url">Save Server URL</string>
+    <string name="pocketbook_email_settings_title">Email Settings (PBSync)</string>
+    <string name="pocketbook_smtp_server">SMTP Server</string>
+    <string name="pocketbook_smtp_server_hint">smtp.gmail.com</string>
+    <string name="pocketbook_smtp_port">Port</string>
+    <string name="pocketbook_username">Username</string>
+    <string name="pocketbook_username_hint">your.email@gmail.com</string>
+    <string name="pocketbook_sender_email">Sender Email</string>
+    <string name="pocketbook_pocketbook_email">Pocketbook Email</string>
+    <string name="pocketbook_pocketbook_email_hint">username@pbsync.com</string>
+    <string name="action_test_connection">Test Connection</string>
+    <string name="pocketbook_upload_method_cloud">Cloud API (Disabled)</string>
+    <string name="pocketbook_upload_method_email">Email (SMTP)</string>
+    <string name="pocketbook_configure_email">Configure Email Settings →</string>
+    
+    <!-- Database Management -->
+    <string name="action_delete_all_books">Delete All Books</string>
+    <string name="dialog_delete_all_title">Delete All Books?</string>
+    <string name="dialog_delete_all_message">Are you sure you want to delete all books from your library? This action cannot be undone!</string>
+    <string name="action_confirm_delete">Delete Everything</string>
+</resources>
+

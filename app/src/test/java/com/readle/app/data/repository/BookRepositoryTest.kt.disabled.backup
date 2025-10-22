@@ -1,0 +1,139 @@
+package com.readle.app.data.repository
+
+import com.readle.app.data.model.BookEntity
+import com.readle.app.data.model.ReadingCategory
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Before
+import org.junit.Test
+import org.mockito.Mock
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
+import org.mockito.MockitoAnnotations
+import com.readle.app.data.database.BookDao
+import kotlinx.coroutines.flow.flowOf
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class BookRepositoryTest {
+
+    @Mock
+    private lateinit var mockBookDao: BookDao
+
+    private lateinit var repository: BookRepository
+
+    private val testBook = BookEntity(
+        id = 1,
+        title = "Test Book",
+        author = "Test Author",
+        description = "Test Description",
+        publisher = "Test Publisher",
+        publishDate = "2024",
+        language = "de",
+        originalLanguage = "en",
+        series = null,
+        seriesNumber = null,
+        isbn = "1234567890",
+        coverPath = null,
+        rating = 5,
+        category = ReadingCategory.READ,
+        isRead = true
+    )
+
+    @Before
+    fun setup() {
+        MockitoAnnotations.openMocks(this)
+        repository = BookRepository(mockBookDao)
+    }
+
+    @Test
+    fun `getAllBooks returns flow of books`() = runTest {
+        val books = listOf(testBook)
+        `when`(mockBookDao.getAllBooks()).thenReturn(flowOf(books))
+
+        val result = repository.getAllBooks().first()
+
+        assertEquals(books, result)
+        verify(mockBookDao).getAllBooks()
+    }
+
+    @Test
+    fun `getBooksByCategory returns filtered books`() = runTest {
+        val books = listOf(testBook)
+        `when`(mockBookDao.getBooksByCategory(ReadingCategory.READ)).thenReturn(flowOf(books))
+
+        val result = repository.getBooksByCategory(ReadingCategory.READ).first()
+
+        assertEquals(books, result)
+        verify(mockBookDao).getBooksByCategory(ReadingCategory.READ)
+    }
+
+    @Test
+    fun `getBookById returns book when exists`() = runTest {
+        `when`(mockBookDao.getBookById(1)).thenReturn(testBook)
+
+        val result = repository.getBookById(1)
+
+        assertNotNull(result)
+        assertEquals(testBook, result)
+        verify(mockBookDao).getBookById(1)
+    }
+
+    @Test
+    fun `getBookById returns null when not exists`() = runTest {
+        `when`(mockBookDao.getBookById(999)).thenReturn(null)
+
+        val result = repository.getBookById(999)
+
+        assertNull(result)
+        verify(mockBookDao).getBookById(999)
+    }
+
+    @Test
+    fun `insertBook calls dao insertBook`() = runTest {
+        `when`(mockBookDao.insertBook(testBook)).thenReturn(1L)
+
+        val result = repository.insertBook(testBook)
+
+        assertEquals(1L, result)
+        verify(mockBookDao).insertBook(testBook)
+    }
+
+    @Test
+    fun `updateBook calls dao updateBook`() = runTest {
+        repository.updateBook(testBook)
+
+        verify(mockBookDao).updateBook(testBook)
+    }
+
+    @Test
+    fun `deleteBook calls dao deleteBook`() = runTest {
+        repository.deleteBook(testBook)
+
+        verify(mockBookDao).deleteBook(testBook)
+    }
+
+    @Test
+    fun `deleteBooks calls dao deleteBooks with ids`() = runTest {
+        val ids = listOf(1L, 2L, 3L)
+
+        repository.deleteBooks(ids)
+
+        verify(mockBookDao).deleteBooks(ids)
+    }
+
+    @Test
+    fun `searchBooks returns filtered results`() = runTest {
+        val books = listOf(testBook)
+        `when`(mockBookDao.searchBooks("Test")).thenReturn(flowOf(books))
+
+        val result = repository.searchBooks("Test").first()
+
+        assertEquals(books, result)
+        verify(mockBookDao).searchBooks("Test")
+    }
+}
+

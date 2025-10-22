@@ -1,0 +1,160 @@
+package com.readle.app.ui.viewmodel
+
+import android.content.Context
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import app.cash.turbine.test
+import com.readle.app.data.api.model.BookDataSource
+import com.readle.app.data.api.model.BookSearchResult
+import com.readle.app.data.model.BookEntity
+import com.readle.app.data.model.ReadingCategory
+import com.readle.app.data.repository.BookRepository
+import com.readle.app.data.repository.BookSearchRepository
+import com.readle.app.util.ImageManager
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkObject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class AddBookViewModelTest {
+
+    @get:Rule
+    val instantExecutorRule = InstantTaskExecutorRule()
+
+    private lateinit var mockContext: Context
+    private lateinit var mockBookRepository: BookRepository
+    private lateinit var mockBookSearchRepository: BookSearchRepository
+
+    private lateinit var viewModel: AddBookViewModel
+
+    private val testDispatcher = StandardTestDispatcher()
+
+    private val testSearchResult = BookSearchResult(
+        title = "Test Book",
+        author = "Test Author",
+        description = "Test Description",
+        publisher = "Test Publisher",
+        publishDate = "2024",
+        language = "de",
+        originalLanguage = null,
+        series = null,
+        seriesNumber = null,
+        isbn = "1234567890",
+        coverUrl = "https://example.com/cover.jpg",
+        source = BookDataSource.GOOGLE_BOOKS
+    )
+
+    @Before
+    fun setup() {
+        Dispatchers.setMain(testDispatcher)
+        mockContext = mockk(relaxed = true)
+        mockBookRepository = mockk(relaxed = true)
+        mockBookSearchRepository = mockk(relaxed = true)
+
+        mockkObject(ImageManager)
+        every { ImageManager.downloadAndSaveImage(any(), any()) } returns null
+
+        viewModel = AddBookViewModel(mockContext, mockBookRepository, mockBookSearchRepository)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `initial state is Idle`() = runTest {
+        viewModel.uiState.test {
+            assertTrue(awaitItem() is AddBookUiState.Idle)
+        }
+    }
+
+    @Test
+    fun `searchByIsbn returns SearchResults on success`() = runTest {
+        coEvery { mockBookSearchRepository.searchByIsbn("1234567890") } returns listOf(testSearchResult)
+
+        viewModel.searchByIsbn("1234567890")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertTrue(state is AddBookUiState.SearchResults)
+            assertEquals(1, (state as AddBookUiState.SearchResults).results.size)
+        }
+    }
+
+    @Test
+    fun `searchByIsbn returns Error on empty results`() = runTest {
+        coEvery { mockBookSearchRepository.searchByIsbn("1234567890") } returns emptyList()
+
+        viewModel.searchByIsbn("1234567890")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertTrue(state is AddBookUiState.Error)
+        }
+    }
+
+    @Test
+    fun `searchByTitleAuthor returns SearchResults on success`() = runTest {
+        coEvery { mockBookSearchRepository.searchByTitleAuthor("Test", "Author") } returns
+            listOf(testSearchResult)
+
+        viewModel.searchByTitleAuthor("Test", "Author")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertTrue(state is AddBookUiState.SearchResults)
+        }
+    }
+
+    @Test
+    fun `addBookToLibrary inserts book into repository`() = runTest {
+        coEvery { mockBookRepository.insertBook(any()) } returns 1L
+
+        viewModel.addBookToLibrary(testSearchResult, ReadingCategory.WANT_TO_READ, 5)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify { mockBookRepository.insertBook(any()) }
+    }
+
+    @Test
+    fun `addManualBook inserts book into repository`() = runTest {
+        coEvery { mockBookRepository.insertBook(any()) } returns 1L
+
+        viewModel.addManualBook(
+            title = "Manual Book",
+            author = "Manual Author",
+            category = ReadingCategory.READ,
+            rating = 4
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify { mockBookRepository.insertBook(any()) }
+    }
+
+    @Test
+    fun `resetState sets state to Idle`() = runTest {
+        viewModel.resetState()
+
+        viewModel.uiState.test {
+            assertTrue(awaitItem() is AddBookUiState.Idle)
+        }
+    }
+}
+

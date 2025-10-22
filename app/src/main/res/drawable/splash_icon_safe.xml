@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- This creates padding around the icon to prevent circular cropping -->
+    <!-- Android 12+ masks splash icons in a circle that's about 2/3 of the icon size -->
+    <!-- Using clean icon without shadow and 34dp padding - perfect balance -->
+    <item
+        android:drawable="@drawable/splash_icon_clean"
+        android:top="34dp"
+        android:bottom="34dp"
+        android:left="34dp"
+        android:right="34dp" />
+</layer-list>
+
