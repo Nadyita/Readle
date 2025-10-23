@@ -24,10 +24,14 @@ class AudiobookshelfApiClient @Inject constructor() {
             }
             .build()
 
+        val gson = com.google.gson.GsonBuilder()
+            .setLenient()
+            .create()
+
         retrofit = Retrofit.Builder()
             .baseUrl("$cleanUrl/")
             .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
 
         apiService = retrofit?.create(AudiobookshelfApiService::class.java)
@@ -46,9 +50,11 @@ class AudiobookshelfApiClient @Inject constructor() {
                 val token = response.body()!!.user.token
                 Result.success(token)
             } else {
+                android.util.Log.e("AudiobookshelfApi", "Login failed: ${response.code()} ${response.message()}")
                 Result.failure(Exception("Login failed: ${response.code()} ${response.message()}"))
             }
         } catch (e: Exception) {
+            android.util.Log.e("AudiobookshelfApi", "Login exception: ${e.message}", e)
             Result.failure(e)
         }
     }
