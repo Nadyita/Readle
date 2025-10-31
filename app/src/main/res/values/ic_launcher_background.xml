@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Icon background matches splash background for consistency -->
+    <color name="ic_launcher_background">#FFFBFE</color>
+</resources>

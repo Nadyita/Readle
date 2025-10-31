@@ -2,9 +2,13 @@
 <resources>
     <style name="Theme.Readle" parent="android:Theme.Material.Light.NoActionBar">
         <!-- Splash Screen (Android 12+) -->
-        <!-- Use icon with padding to prevent circular cropping -->
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon_safe</item>
+        <!-- Use launcher icon foreground - optimally designed for adaptive icons -->
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
         <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+        <!-- Animation duration for smoother transition (default is 1000ms) -->
+        <item name="android:windowSplashScreenAnimationDuration">500</item>
+        <!-- Brand image shown at bottom of splash screen (optional) -->
+        <item name="android:windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
     </style>
 </resources>
 
