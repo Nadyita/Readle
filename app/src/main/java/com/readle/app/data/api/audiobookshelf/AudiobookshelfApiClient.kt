@@ -16,11 +16,17 @@ class AudiobookshelfApiClient @Inject constructor() {
         val cleanUrl = serverUrl.trim().removeSuffix("/")
 
         val client = OkHttpClient.Builder()
+            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
             .addInterceptor { chain ->
                 val request = chain.request().newBuilder()
                     .addHeader("Content-Type", "application/json")
                     .build()
-                chain.proceed(request)
+                android.util.Log.d("AudiobookshelfApi", "Request: ${request.method} ${request.url}")
+                val response = chain.proceed(request)
+                android.util.Log.d("AudiobookshelfApi", "Response: ${response.code} for ${request.url}")
+                response
             }
             .build()
 
