@@ -37,3 +37,29 @@
 -keep @androidx.room.Entity class *
 -dontwarn androidx.room.paging.**
 
+# JavaMail / Android-Mail
+-keep class javax.mail.** { *; }
+-keep class com.sun.mail.** { *; }
+-keep class javax.activation.** { *; }
+-keep class com.sun.activation.** { *; }
+-dontwarn javax.mail.**
+-dontwarn com.sun.mail.**
+-dontwarn javax.activation.**
+-dontwarn com.sun.activation.**
+# Keep provider configurations
+-keepclasseswithmembers class * {
+    public static *** getInstance(...);
+}
+-keep class * extends javax.mail.Provider { *; }
+-keep class * extends javax.mail.Service { *; }
+-keep class * extends javax.activation.DataSource { *; }
+-keepclassmembers class javax.mail.Session {
+    *** getTransport(...);
+}
+# Keep META-INF service files (used by JavaMail for provider registration)
+-keeppackagenames javax.mail.**,com.sun.mail.**
+-keep class javax.mail.internet.** { *; }
+-keep class com.sun.mail.smtp.** { *; }
+-keep class com.sun.mail.handlers.** { *; }
+-keep class com.sun.mail.imap.** { *; }
+

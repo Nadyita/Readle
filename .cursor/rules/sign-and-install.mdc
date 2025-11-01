@@ -1,0 +1,4 @@
+---
+alwaysApply: true
+---
+If we want to install a signed version of the app, we can use the `build-and-install-release.sh` script in this project's base directory.

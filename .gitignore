@@ -15,3 +15,6 @@ local.properties
 /app/debug/
 *.log
 
+# Local build scripts with credentials
+build-and-install-release.sh
+
