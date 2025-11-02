@@ -211,40 +211,40 @@ class SyncPocketbookUseCase @Inject constructor(
                                     "PocketbookSync",
                                     "Marked '${matchedBook.title}' as READ (${pbBook.readPercent}% in Pocketbook)"
                                 )
-                            }
-                            
-                            // Also update Audiobookshelf if book is linked and token is available
-                            val absId = matchedBook.audiobookshelfId
-                            if (!absId.isNullOrBlank() && !audiobookshelfToken.isNullOrBlank()) {
-                                android.util.Log.d(
-                                    "PocketbookSync",
-                                    "Attempting to sync '${matchedBook.title}' to Audiobookshelf (ID: $absId)"
-                                )
-                                try {
-                                    val absResult = audiobookshelfClient.updateBookProgress(
-                                        token = audiobookshelfToken,
-                                        libraryItemId = absId,
-                                        isFinished = true
+                                
+                                // Also update Audiobookshelf if book is linked and token is available
+                                val absId = matchedBook.audiobookshelfId
+                                if (!absId.isNullOrBlank() && !audiobookshelfToken.isNullOrBlank()) {
+                                    android.util.Log.d(
+                                        "PocketbookSync",
+                                        "Attempting to sync '${matchedBook.title}' to Audiobookshelf (ID: $absId)"
                                     )
-                                    if (absResult.isSuccess) {
-                                        audiobookshelfSynced++
-                                        android.util.Log.d(
-                                            "PocketbookSync",
-                                            "Successfully synced '${matchedBook.title}' to Audiobookshelf"
+                                    try {
+                                        val absResult = audiobookshelfClient.updateBookProgress(
+                                            token = audiobookshelfToken,
+                                            libraryItemId = absId,
+                                            isFinished = true
                                         )
-                                    } else {
-                                        val error = absResult.exceptionOrNull()
-                                        android.util.Log.w(
+                                        if (absResult.isSuccess) {
+                                            audiobookshelfSynced++
+                                            android.util.Log.d(
+                                                "PocketbookSync",
+                                                "Successfully synced '${matchedBook.title}' to Audiobookshelf"
+                                            )
+                                        } else {
+                                            val error = absResult.exceptionOrNull()
+                                            android.util.Log.w(
+                                                "PocketbookSync",
+                                                "Failed to sync '${matchedBook.title}' to Audiobookshelf: ${error?.message}"
+                                            )
+                                        }
+                                    } catch (e: Exception) {
+                                        android.util.Log.e(
                                             "PocketbookSync",
-                                            "Failed to sync '${matchedBook.title}' to Audiobookshelf: ${error?.message}"
+                                            "Error syncing '${matchedBook.title}' to Audiobookshelf: ${e.message}",
+                                            e
                                         )
                                     }
-                                } catch (e: Exception) {
-                                    android.util.Log.e(
-                                        "PocketbookSync",
-                                        "Error syncing '${matchedBook.title}' to Audiobookshelf: ${e.message}",
-                                        e
-                                    )
                                 }
                             }
                         }
