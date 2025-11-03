@@ -179,6 +179,13 @@
     <string name="pocketbook_upload_method_email">Email (SMTP)</string>
     <string name="pocketbook_configure_email">Configure Email Settings →</string>
     
+    <!-- Import Notification -->
+    <string name="notification_import_title">Importing Books</string>
+    <string name="notification_import_progress_text">%1$d / %2$d books</string>
+    <string name="notification_import_complete_title">Import Complete</string>
+    <string name="notification_import_complete_text">%1$d new, %2$d updated (total: %3$d)</string>
+    <string name="notification_import_error_title">Import Failed</string>
+    
     <!-- Database Management -->
     <string name="action_delete_all_books">Delete All Books</string>
     <string name="dialog_delete_all_title">Delete All Books?</string>

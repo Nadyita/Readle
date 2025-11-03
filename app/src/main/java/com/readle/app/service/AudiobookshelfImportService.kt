@@ -213,17 +213,17 @@ class AudiobookshelfImportService : Service() {
         )
 
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Importing Books")
-            .setContentText(text)
+            .setContentTitle(getString(R.string.notification_import_title))
             .setSmallIcon(R.drawable.ic_sync)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
 
         if (total > 0) {
             builder.setProgress(total, current, false)
-            builder.setContentText("$current / $total books")
+            builder.setContentText(getString(R.string.notification_import_progress_text, current, total))
         } else {
             builder.setProgress(0, 0, true)
+            builder.setContentText(text)
         }
 
         return builder.build()
@@ -239,8 +239,8 @@ class AudiobookshelfImportService : Service() {
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Import Complete")
-            .setContentText("$imported new, $updated updated (total: $total)")
+            .setContentTitle(getString(R.string.notification_import_complete_title))
+            .setContentText(getString(R.string.notification_import_complete_text, imported, updated, total))
             .setSmallIcon(R.drawable.ic_sync)
             .setContentIntent(pendingIntent)
             .setOngoing(false)
@@ -258,7 +258,7 @@ class AudiobookshelfImportService : Service() {
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Import Failed")
+            .setContentTitle(getString(R.string.notification_import_error_title))
             .setContentText(message)
             .setSmallIcon(R.drawable.ic_sync)
             .setContentIntent(pendingIntent)
