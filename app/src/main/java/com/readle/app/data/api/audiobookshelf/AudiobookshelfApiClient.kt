@@ -720,6 +720,14 @@ class AudiobookshelfApiClient @Inject constructor() {
         val normalizedAuthor = java.text.Normalizer.normalize(author, java.text.Normalizer.Form.NFC)
         val normalizedOriginalTitle = java.text.Normalizer.normalize(originalTitle, java.text.Normalizer.Form.NFC)
         val normalizedOriginalAuthor = java.text.Normalizer.normalize(originalAuthor, java.text.Normalizer.Form.NFC)
+        
+        // Calculate titleSort using titleIgnorePrefix from Audiobookshelf if available
+        // Otherwise use the cleaned title
+        val titleForSorting = metadata.titleIgnorePrefix ?: cleanedTitle
+        val titleSort = com.readle.app.util.TextNormalizer.normalizeTitleForSorting(
+            titleForSorting,
+            null // No language info from Audiobookshelf, will use English as fallback
+        )
 
         return if (existingBook != null) {
             // Update existing book with Audiobookshelf data (authoritative!)
@@ -741,7 +749,8 @@ class AudiobookshelfApiClient @Inject constructor() {
                 dateFinished = if (isRead && existingBook.dateFinished == null)
                     System.currentTimeMillis() else existingBook.dateFinished,
                 dateStarted = if (isOwned && existingBook.dateStarted == null)
-                    System.currentTimeMillis() else existingBook.dateStarted
+                    System.currentTimeMillis() else existingBook.dateStarted,
+                titleSort = titleSort
             )
         } else {
             // Create new book
@@ -760,7 +769,8 @@ class AudiobookshelfApiClient @Inject constructor() {
                 isEBook = true,
                 dateAdded = dateAdded,
                 dateStarted = if (isOwned) System.currentTimeMillis() else null,
-                dateFinished = if (isRead) System.currentTimeMillis() else null
+                dateFinished = if (isRead) System.currentTimeMillis() else null,
+                titleSort = titleSort
             )
         }
     }

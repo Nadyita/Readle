@@ -32,7 +32,8 @@ object DatabaseModule {
                 ReadleDatabase.MIGRATION_6_7,
                 ReadleDatabase.MIGRATION_7_8,
                 ReadleDatabase.MIGRATION_8_9,
-                ReadleDatabase.MIGRATION_9_10
+                ReadleDatabase.MIGRATION_9_10,
+                ReadleDatabase.MIGRATION_10_11
             )
             .build()
     }

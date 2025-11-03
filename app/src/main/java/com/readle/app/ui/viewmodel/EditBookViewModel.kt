@@ -69,8 +69,9 @@ class EditBookViewModel @Inject constructor(
             try {
                 val existingBook = bookRepository.getBookById(bookId)
                 if (existingBook != null) {
+                    val normalizedTitle = com.readle.app.util.TextNormalizer.normalizeTitle(title)
                     val updatedBook = existingBook.copy(
-                        title = com.readle.app.util.TextNormalizer.normalizeTitle(title),
+                        title = normalizedTitle,
                         author = com.readle.app.util.TextNormalizer.normalizeAuthor(author),
                         description = description,
                         publishDate = publishDate,
@@ -82,7 +83,11 @@ class EditBookViewModel @Inject constructor(
                         comments = comments,
                         rating = rating,
                         isOwned = isOwned,
-                        isRead = isRead
+                        isRead = isRead,
+                        titleSort = com.readle.app.util.TextNormalizer.normalizeTitleForSorting(
+                            normalizedTitle,
+                            language
+                        )
                     )
                     bookRepository.updateBook(updatedBook)
                     _uiState.value = EditBookUiState.Success

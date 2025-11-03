@@ -29,7 +29,8 @@ data class BookEntity(
     val audiobookshelfId: String? = null,
     val inPocketbookCloud: Boolean = false, // Deprecated - use uploadedToCloudApi or uploadedViaEmail
     val uploadedToCloudApi: Boolean = false,
-    val uploadedViaEmail: Boolean = false
+    val uploadedViaEmail: Boolean = false,
+    val titleSort: String = "" // Normalized title for sorting (articles and special chars removed)
 )
 
 // Kept for backwards compatibility during migration

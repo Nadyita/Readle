@@ -265,7 +265,11 @@ class AddBookViewModel @Inject constructor(
                     dateStarted = if (isOwned && !isRead)
                         System.currentTimeMillis() else null,
                     dateFinished = if (isRead)
-                        System.currentTimeMillis() else null
+                        System.currentTimeMillis() else null,
+                    titleSort = com.readle.app.util.TextNormalizer.normalizeTitleForSorting(
+                        book.title,
+                        book.language
+                    )
                 )
 
                 bookRepository.insertBook(bookEntity)
@@ -310,7 +314,11 @@ class AddBookViewModel @Inject constructor(
                     dateStarted = if (isOwned && !isRead)
                         System.currentTimeMillis() else null,
                     dateFinished = if (isRead)
-                        System.currentTimeMillis() else null
+                        System.currentTimeMillis() else null,
+                    titleSort = com.readle.app.util.TextNormalizer.normalizeTitleForSorting(
+                        title,
+                        language
+                    )
                 )
 
                 bookRepository.insertBook(bookEntity)

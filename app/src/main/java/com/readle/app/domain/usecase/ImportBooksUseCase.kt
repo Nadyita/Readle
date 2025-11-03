@@ -109,7 +109,11 @@ class ImportBooksUseCase @Inject constructor(
                 dateFinished = (bookMap["dateFinished"] as? Double)?.toLong(),
                 audiobookshelfId = bookMap["audiobookshelfId"] as? String,
                 uploadedToCloudApi = bookMap["uploadedToCloudApi"] as? Boolean ?: false,
-                uploadedViaEmail = bookMap["uploadedViaEmail"] as? Boolean ?: false
+                uploadedViaEmail = bookMap["uploadedViaEmail"] as? Boolean ?: false,
+                titleSort = com.readle.app.util.TextNormalizer.normalizeTitleForSorting(
+                    bookMap["title"] as? String ?: "",
+                    bookMap["language"] as? String
+                )
             )
         }
     }
@@ -152,7 +156,11 @@ class ImportBooksUseCase @Inject constructor(
                 dateFinished = getElementText(bookNode, "dateFinished")?.toLongOrNull(),
                 audiobookshelfId = getElementText(bookNode, "audiobookshelfId"),
                 uploadedToCloudApi = getElementText(bookNode, "uploadedToCloudApi")?.toBoolean() ?: false,
-                uploadedViaEmail = getElementText(bookNode, "uploadedViaEmail")?.toBoolean() ?: false
+                uploadedViaEmail = getElementText(bookNode, "uploadedViaEmail")?.toBoolean() ?: false,
+                titleSort = com.readle.app.util.TextNormalizer.normalizeTitleForSorting(
+                    getElementText(bookNode, "title") ?: "",
+                    getElementText(bookNode, "language")
+                )
             )
             books.add(book)
         }

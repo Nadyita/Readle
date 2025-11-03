@@ -145,14 +145,11 @@ class BookListViewModel @Inject constructor(
             
             // Sort results: by series number if filtering by series, otherwise by selected sort order
             if (searchField == "series") {
-                // When filtering by series, sort by series number (then by title as fallback)
-                exactMatches.sortedWith(compareBy(
-                    { it.seriesNumber?.toDoubleOrNull() ?: Double.MAX_VALUE },
-                    { it.title.lowercase() }
-                )) + wordMatches.sortedWith(compareBy(
-                    { it.seriesNumber?.toDoubleOrNull() ?: Double.MAX_VALUE },
-                    { it.title.lowercase() }
-                ))
+                // When filtering by series, sort by series number (then by titleSort as fallback)
+                val collator = java.text.Collator.getInstance()
+                val comparator = compareBy<BookEntity> { it.seriesNumber?.toDoubleOrNull() ?: Double.MAX_VALUE }
+                    .then(Comparator { a, b -> collator.compare(a.titleSort, b.titleSort) })
+                exactMatches.sortedWith(comparator) + wordMatches.sortedWith(comparator)
             } else {
                 // Apply selected sort order
                 applySortOrder(exactMatches, sortOrder) + applySortOrder(wordMatches, sortOrder)
@@ -189,7 +186,9 @@ class BookListViewModel @Inject constructor(
                 }
             }
             
-            exactMatches.sortedBy { it.title.lowercase() } + wordMatches.sortedBy { it.title.lowercase() }
+            val collator = java.text.Collator.getInstance()
+            val comparator = Comparator<BookEntity> { a, b -> collator.compare(a.titleSort, b.titleSort) }
+            exactMatches.sortedWith(comparator) + wordMatches.sortedWith(comparator)
         }
     }.stateIn(
         scope = viewModelScope,
@@ -578,13 +577,16 @@ class BookListViewModel @Inject constructor(
     
     /**
      * Applies the selected sort order to a list of books.
+     * Uses locale-aware Collator for title and author sorting to properly handle
+     * umlauts and other special characters based on system language.
      */
     private fun applySortOrder(books: List<BookEntity>, sortOrder: com.readle.app.data.model.SortOrder): List<BookEntity> {
+        val collator = java.text.Collator.getInstance()
         return when (sortOrder) {
-            com.readle.app.data.model.SortOrder.TITLE_ASC -> books.sortedBy { it.title.lowercase() }
-            com.readle.app.data.model.SortOrder.TITLE_DESC -> books.sortedByDescending { it.title.lowercase() }
-            com.readle.app.data.model.SortOrder.AUTHOR_ASC -> books.sortedBy { it.author.lowercase() }
-            com.readle.app.data.model.SortOrder.AUTHOR_DESC -> books.sortedByDescending { it.author.lowercase() }
+            com.readle.app.data.model.SortOrder.TITLE_ASC -> books.sortedWith(compareBy(collator) { it.titleSort })
+            com.readle.app.data.model.SortOrder.TITLE_DESC -> books.sortedWith(compareByDescending(collator) { it.titleSort })
+            com.readle.app.data.model.SortOrder.AUTHOR_ASC -> books.sortedWith(compareBy(collator) { it.author })
+            com.readle.app.data.model.SortOrder.AUTHOR_DESC -> books.sortedWith(compareByDescending(collator) { it.author })
             com.readle.app.data.model.SortOrder.DATE_ADDED_ASC -> books.sortedBy { it.dateAdded }
             com.readle.app.data.model.SortOrder.DATE_ADDED_DESC -> books.sortedByDescending { it.dateAdded }
         }

@@ -9,7 +9,7 @@ import com.readle.app.data.model.BookEntity
 
 @Database(
     entities = [BookEntity::class],
-    version = 10,
+    version = 11,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -241,6 +241,51 @@ abstract class ReadleDatabase : RoomDatabase() {
                 
                 // We keep the category column for now to avoid data loss
                 // It can be removed in a future migration if needed
+            }
+        }
+
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Add titleSort column for locale-aware sorting
+                // This field contains the title with articles and special characters removed
+                // based on the book's language
+                database.execSQL("ALTER TABLE books ADD COLUMN titleSort TEXT NOT NULL DEFAULT ''")
+                
+                // Populate titleSort for existing books
+                // We use a simplified normalization in SQL (remove common articles)
+                // The app will recalculate proper values on next book update/import
+                database.execSQL("""
+                    UPDATE books 
+                    SET titleSort = 
+                        CASE
+                            -- Remove leading special characters
+                            WHEN SUBSTR(title, 1, 1) IN ('¿', '¡', '"', '''', '«', '»') 
+                                THEN TRIM(SUBSTR(title, 2))
+                            -- Remove German articles (Der/Die/Das/Ein/Eine)
+                            WHEN UPPER(SUBSTR(title, 1, 4)) = 'DER ' THEN TRIM(SUBSTR(title, 5))
+                            WHEN UPPER(SUBSTR(title, 1, 4)) = 'DIE ' THEN TRIM(SUBSTR(title, 5))
+                            WHEN UPPER(SUBSTR(title, 1, 4)) = 'DAS ' THEN TRIM(SUBSTR(title, 5))
+                            WHEN UPPER(SUBSTR(title, 1, 4)) = 'EIN ' THEN TRIM(SUBSTR(title, 5))
+                            WHEN UPPER(SUBSTR(title, 1, 5)) = 'EINE ' THEN TRIM(SUBSTR(title, 6))
+                            -- Remove English articles (The/A/An)
+                            WHEN UPPER(SUBSTR(title, 1, 4)) = 'THE ' THEN TRIM(SUBSTR(title, 5))
+                            WHEN UPPER(SUBSTR(title, 1, 2)) = 'A ' THEN TRIM(SUBSTR(title, 3))
+                            WHEN UPPER(SUBSTR(title, 1, 3)) = 'AN ' THEN TRIM(SUBSTR(title, 4))
+                            -- Remove Spanish articles (El/La/Los/Las/Un/Una)
+                            WHEN UPPER(SUBSTR(title, 1, 3)) = 'EL ' THEN TRIM(SUBSTR(title, 4))
+                            WHEN UPPER(SUBSTR(title, 1, 3)) = 'LA ' THEN TRIM(SUBSTR(title, 4))
+                            WHEN UPPER(SUBSTR(title, 1, 4)) = 'LOS ' THEN TRIM(SUBSTR(title, 5))
+                            WHEN UPPER(SUBSTR(title, 1, 4)) = 'LAS ' THEN TRIM(SUBSTR(title, 5))
+                            WHEN UPPER(SUBSTR(title, 1, 3)) = 'UN ' THEN TRIM(SUBSTR(title, 4))
+                            WHEN UPPER(SUBSTR(title, 1, 4)) = 'UNA ' THEN TRIM(SUBSTR(title, 5))
+                            -- Remove French articles (Le/La/Les/L'/Un/Une)
+                            WHEN UPPER(SUBSTR(title, 1, 3)) = 'LE ' THEN TRIM(SUBSTR(title, 4))
+                            WHEN UPPER(SUBSTR(title, 1, 4)) = 'LES ' THEN TRIM(SUBSTR(title, 5))
+                            WHEN UPPER(SUBSTR(title, 1, 2)) = 'L''' THEN TRIM(SUBSTR(title, 3))
+                            -- Keep title as-is if no article detected
+                            ELSE title
+                        END
+                """.trimIndent())
             }
         }
     }

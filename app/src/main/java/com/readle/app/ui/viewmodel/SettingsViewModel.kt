@@ -659,7 +659,11 @@ class SettingsViewModel @Inject constructor(
                         dateAdded = System.currentTimeMillis(),
                         dateStarted = null,
                         dateFinished = System.currentTimeMillis(),
-                        audiobookshelfId = null
+                        audiobookshelfId = null,
+                        titleSort = com.readle.app.util.TextNormalizer.normalizeTitleForSorting(
+                            normalizedTitle,
+                            null // No language info from Pocketbook
+                        )
                     )
 
                     bookRepository.insertBook(book)
