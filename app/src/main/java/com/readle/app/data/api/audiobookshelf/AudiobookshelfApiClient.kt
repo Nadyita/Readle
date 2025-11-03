@@ -2,6 +2,9 @@ package com.readle.app.data.api.audiobookshelf
 
 import com.readle.app.data.model.BookEntity
 import com.readle.app.data.model.ReadingCategory
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -19,6 +22,8 @@ class AudiobookshelfApiClient @Inject constructor() {
             .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
             .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
             .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            // Enable connection pooling with more connections for parallel requests
+            .connectionPool(okhttp3.ConnectionPool(20, 5, java.util.concurrent.TimeUnit.MINUTES))
             .addInterceptor { chain ->
                 val request = chain.request().newBuilder()
                     .addHeader("Content-Type", "application/json")
@@ -65,7 +70,11 @@ class AudiobookshelfApiClient @Inject constructor() {
         }
     }
 
-    suspend fun importEbooks(token: String, existingBooks: List<BookEntity>): Result<List<BookEntity>> {
+    suspend fun importEbooks(
+        token: String, 
+        existingBooks: List<BookEntity>,
+        onProgress: ((current: Int, total: Int) -> Unit)? = null
+    ): Result<List<BookEntity>> {
         return try {
             val service = apiService ?: return Result.failure(
                 Exception("Audiobookshelf API not initialized.")
@@ -100,39 +109,109 @@ class AudiobookshelfApiClient @Inject constructor() {
 
             val allImportedBooks = mutableListOf<BookEntity>()
 
-            // For each book library, get all items
+            // Count total eBooks across all libraries first
+            var totalEbooks = 0
+            val ebooksByLibrary = mutableMapOf<String, List<AudiobookshelfLibraryItem>>()
+            
             for (library in bookLibraries) {
                 val itemsResponse = service.getLibraryItems(library.id, authHeader)
-
                 if (itemsResponse.isSuccessful && itemsResponse.body() != null) {
                     val items = itemsResponse.body()!!.results
-
-                    // DEBUG: Log what we're seeing
-                    items.forEach { item ->
-                        android.util.Log.d("AudiobookshelfImport", 
-                            "Item: ${item.media.metadata.title}, " +
-                            "mediaType=${item.mediaType}, " +
-                            "ebookFormat=${item.media.ebookFormat}, " +
-                            "numAudioFiles=${item.media.numAudioFiles ?: 0}"
-                        )
-                    }
-
-                    // Filter for items that have an eBook format
-                    // In the list API, ebookFile doesn't exist, but ebookFormat does!
-                    // If ebookFormat is set (e.g. "epub"), it's an eBook → import it
-                    // If ebookFormat is null/empty, it's audiobook-only → skip it
                     val ebooks = items.filter { item ->
                         item.mediaType == "book" && !item.media.ebookFormat.isNullOrBlank()
                     }
-                    
+                    ebooksByLibrary[library.id] = ebooks
+                    totalEbooks += ebooks.size
+                }
+            }
+            
+            android.util.Log.d("AudiobookshelfImport", "Total eBooks to import: $totalEbooks")
+            
+            // Send initial progress update
+            onProgress?.invoke(0, totalEbooks)
+            
+            var processedCount = 0
+
+            // For each book library, get all items
+            for (library in bookLibraries) {
+                val ebooks = ebooksByLibrary[library.id] ?: emptyList()
+                
+                if (ebooks.isNotEmpty()) {
                     android.util.Log.d("AudiobookshelfImport", 
-                        "Filtered: ${ebooks.size} eBooks out of ${items.size} total items"
+                        "Processing ${ebooks.size} eBooks from library ${library.name}"
                     )
 
-                    // Convert to BookEntity
+                    // Identify which books need full details (new books only)
+                    val booksNeedingDetails = ebooks.filter { item ->
+                        existingBooks.none { it.audiobookshelfId == item.id }
+                    }
+                    
+                    android.util.Log.d("AudiobookshelfImport", 
+                        "Need full details for ${booksNeedingDetails.size} new books, ${ebooks.size - booksNeedingDetails.size} existing books"
+                    )
+                    
+                    // Fetch full details in parallel for new books (limit concurrency to avoid overwhelming server)
+                    val itemsWithDetails = if (booksNeedingDetails.isNotEmpty()) {
+                        coroutineScope {
+                            val chunkSize = 10 // Process 10 books at a time
+                            val allDetails = mutableMapOf<String, AudiobookshelfLibraryItem>()
+                            
+                            for (chunk in booksNeedingDetails.chunked(chunkSize)) {
+                                val deferredDetails = chunk.map { item ->
+                                    async {
+                                        try {
+                                            val detailResponse = service.getLibraryItem(item.id, authHeader)
+                                            if (detailResponse.isSuccessful && detailResponse.body() != null) {
+                                                item.id to detailResponse.body()!!
+                                            } else {
+                                                android.util.Log.w("AudiobookshelfImport", 
+                                                    "Failed to fetch details for ${item.id}, using list data"
+                                                )
+                                                item.id to item
+                                            }
+                                        } catch (e: Exception) {
+                                            android.util.Log.w("AudiobookshelfImport", 
+                                                "Exception fetching details for ${item.id}: ${e.message}"
+                                            )
+                                            item.id to item
+                                        }
+                                    }
+                                }
+                                
+                                // Wait for this chunk to complete and update progress
+                                deferredDetails.forEach { deferred ->
+                                    val (id, details) = deferred.await()
+                                    allDetails[id] = details
+                                    
+                                    // Update progress for fetched details
+                                    processedCount++
+                                    onProgress?.invoke(processedCount, totalEbooks)
+                                }
+                            }
+                            
+                            allDetails
+                        }
+                    } else {
+                        emptyMap()
+                    }
+                    
+                    // Now process all books sequentially for progress reporting
                     for (item in ebooks) {
                         try {
-                            val book = convertToBookEntity(item, existingBooks, progressMap)
+                            // Only increment for books we haven't already counted during detail fetching
+                            if (!itemsWithDetails.containsKey(item.id)) {
+                                processedCount++
+                                onProgress?.invoke(processedCount, totalEbooks)
+                            }
+                            
+                            android.util.Log.d("AudiobookshelfImport", 
+                                "Processing $processedCount/$totalEbooks: ${item.media.metadata.title}"
+                            )
+                            
+                            // Use detailed data if available, otherwise use list data
+                            val itemWithDetails = itemsWithDetails[item.id] ?: item
+                            
+                            val book = convertToBookEntity(itemWithDetails, existingBooks, progressMap)
                             allImportedBooks.add(book)
                             
                             // Sync back to ABS if local book is READ but ABS says not finished
@@ -265,6 +344,12 @@ class AudiobookshelfApiClient @Inject constructor() {
         progressMap: Map<String, Boolean> = emptyMap()
     ): BookEntity {
         val metadata = item.media.metadata
+        
+        // Determine the best dateAdded timestamp
+        // Priority: 1. mtimeMs from ebook file (most reliable)
+        //           2. addedAt from library item
+        //           3. Current time as fallback
+        val dateAdded = determineBestDateAdded(item)
         
         // Get original (non-normalized) values for search
         val originalTitle = metadata.title ?: "Unknown Title"
@@ -651,6 +736,8 @@ class AudiobookshelfApiClient @Inject constructor() {
                 isRead = isRead,
                 audiobookshelfId = item.id,
                 isEBook = true,
+                // Keep existing dateAdded - never change after initial import
+                dateAdded = existingBook.dateAdded,
                 dateFinished = if (isRead && existingBook.dateFinished == null)
                     System.currentTimeMillis() else existingBook.dateFinished,
                 dateStarted = if (isOwned && existingBook.dateStarted == null)
@@ -671,11 +758,45 @@ class AudiobookshelfApiClient @Inject constructor() {
                 isRead = isRead,
                 audiobookshelfId = item.id,
                 isEBook = true,
-                dateAdded = System.currentTimeMillis(),
+                dateAdded = dateAdded,
                 dateStarted = if (isOwned) System.currentTimeMillis() else null,
                 dateFinished = if (isRead) System.currentTimeMillis() else null
             )
         }
+    }
+
+    /**
+     * Determines the best dateAdded timestamp from available sources.
+     * Priority:
+     * 1. mtimeMs from ebook file metadata (most reliable - actual file modification time)
+     * 2. addedAt from library item (when added to Audiobookshelf)
+     * 3. Current time as fallback
+     */
+    private fun determineBestDateAdded(item: AudiobookshelfLibraryItem): Long {
+        // Try to get mtimeMs from ebook file first (most reliable)
+        val ebookMtime = item.media.ebookFile?.metadata?.mtimeMs
+        
+        android.util.Log.d("DateDebug", "Book: ${item.media.metadata.title}")
+        android.util.Log.d("DateDebug", "  ebookFile.metadata.mtimeMs: $ebookMtime")
+        android.util.Log.d("DateDebug", "  item.addedAt: ${item.addedAt}")
+        android.util.Log.d("DateDebug", "  item.mtimeMs: ${item.mtimeMs}")
+        
+        if (ebookMtime != null && ebookMtime > 0) {
+            android.util.Log.d("DateDebug", "  -> Using ebookMtime: $ebookMtime")
+            return ebookMtime
+        }
+        
+        // Fallback to addedAt from library item
+        val addedAt = item.addedAt
+        if (addedAt != null && addedAt > 0) {
+            android.util.Log.d("DateDebug", "  -> Using addedAt: $addedAt")
+            return addedAt
+        }
+        
+        // Last resort: current time
+        val currentTime = System.currentTimeMillis()
+        android.util.Log.d("DateDebug", "  -> Using current time: $currentTime")
+        return currentTime
     }
 
     /**

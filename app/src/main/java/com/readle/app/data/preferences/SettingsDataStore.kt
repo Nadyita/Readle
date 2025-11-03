@@ -46,6 +46,7 @@ class SettingsDataStore @Inject constructor(
         val POCKETBOOK_SEND_TO_EMAIL = stringPreferencesKey("pocketbook_send_to_email")
         val POCKETBOOK_UPLOAD_METHOD = stringPreferencesKey("pocketbook_upload_method")
         val POCKETBOOK_CLEAN_TITLES = booleanPreferencesKey("pocketbook_clean_titles")
+        val BOOK_SORT_ORDER = stringPreferencesKey("book_sort_order")
     }
 
     val themeMode: Flow<ThemeMode> = context.dataStore.data.map { preferences ->
@@ -277,6 +278,17 @@ class SettingsDataStore @Inject constructor(
     suspend fun setPocketbookCleanTitles(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.POCKETBOOK_CLEAN_TITLES] = enabled
+        }
+    }
+
+    val bookSortOrder: Flow<com.readle.app.data.model.SortOrder> = context.dataStore.data.map { preferences ->
+        val sortString = preferences[PreferencesKeys.BOOK_SORT_ORDER]
+        com.readle.app.data.model.SortOrder.fromString(sortString)
+    }
+
+    suspend fun setBookSortOrder(sortOrder: com.readle.app.data.model.SortOrder) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.BOOK_SORT_ORDER] = sortOrder.name
         }
     }
 }

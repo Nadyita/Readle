@@ -125,6 +125,15 @@
     <string name="filter_owned">Besitz:</string>
     <string name="filter_read">Gelesen:</string>
     
+    <!-- Sort labels -->
+    <string name="sort_title_asc">Titel (A-Z)</string>
+    <string name="sort_title_desc">Titel (Z-A)</string>
+    <string name="sort_author_asc">Autor (A-Z)</string>
+    <string name="sort_author_desc">Autor (Z-A)</string>
+    <string name="sort_date_added_asc">Hinzugefügt (älteste zuerst)</string>
+    <string name="sort_date_added_desc">Hinzugefügt (neueste zuerst)</string>
+    <string name="action_sort">Sortieren</string>
+    
     <!-- Upload/Reupload -->
     <string name="dialog_reupload_title">Buch erneut senden?</string>
     <string name="dialog_reupload_single">Dieses Buch wurde bereits auf Ihr Pocketbook gesendet. Möchten Sie es wirklich erneut senden?</string>

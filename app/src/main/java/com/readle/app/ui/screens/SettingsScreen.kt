@@ -34,6 +34,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -133,6 +134,24 @@ fun SettingsScreen(
         }
     }
 
+    // Notification permission launcher for Android 13+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted || android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) {
+            // Permission granted or not needed, start import
+            viewModel.importFromAudiobookshelf()
+        } else {
+            Toast.makeText(
+                context,
+                "Notification permission denied - import will run without progress notification",
+                Toast.LENGTH_LONG
+            ).show()
+            // Still start import even without permission
+            viewModel.importFromAudiobookshelf()
+        }
+    }
+
     LaunchedEffect(importExportState) {
         when (val state = importExportState) {
             is ImportExportState.ExportSuccess -> {
@@ -179,6 +198,22 @@ fun SettingsScreen(
             is com.readle.app.ui.viewmodel.AudiobookshelfLoginState.Success -> {
                 showAbsLoginDialog = false
                 viewModel.resetAudiobookshelfLoginState()
+            }
+            else -> {}
+        }
+    }
+
+    LaunchedEffect(absImportState) {
+        when (val state = absImportState) {
+            is com.readle.app.ui.viewmodel.AudiobookshelfImportState.Success -> {
+                // Reset after a short delay to show the success message
+                kotlinx.coroutines.delay(3000)
+                viewModel.resetAudiobookshelfImportState()
+            }
+            is com.readle.app.ui.viewmodel.AudiobookshelfImportState.Error -> {
+                // Reset after a short delay to show the error message
+                kotlinx.coroutines.delay(5000)
+                viewModel.resetAudiobookshelfImportState()
             }
             else -> {}
         }
@@ -555,7 +590,14 @@ fun SettingsScreen(
                             }
 
                             Button(
-                                onClick = { viewModel.importFromAudiobookshelf() },
+                                onClick = {
+                                    // Check and request notification permission if needed
+                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                                        notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                    } else {
+                                        viewModel.importFromAudiobookshelf()
+                                    }
+                                },
                                 modifier = Modifier.fillMaxWidth(),
                                 enabled = absImportState !is com.readle.app.ui.viewmodel.AudiobookshelfImportState.Loading
                             ) {
@@ -585,10 +627,37 @@ fun SettingsScreen(
                     }
 
                     if (absImportState is com.readle.app.ui.viewmodel.AudiobookshelfImportState.Loading) {
+                        val loadingState = absImportState as com.readle.app.ui.viewmodel.AudiobookshelfImportState.Loading
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            if (loadingState.total > 0) {
+                                Text(
+                                    text = "${loadingState.current} / ${loadingState.total}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                LinearProgressIndicator(
+                                    progress = { loadingState.current.toFloat() / loadingState.total.toFloat() },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            } else {
+                                Text(
+                                    text = stringResource(R.string.abs_import_in_progress),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                    
+                    if (absImportState is com.readle.app.ui.viewmodel.AudiobookshelfImportState.Success) {
+                        val successState = absImportState as com.readle.app.ui.viewmodel.AudiobookshelfImportState.Success
                         Text(
-                            text = stringResource(R.string.abs_import_in_progress),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
+                            text = "Import complete: ${successState.imported} new, ${successState.updated} updated (${successState.total} total)",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodySmall
                         )
                     }
                 }

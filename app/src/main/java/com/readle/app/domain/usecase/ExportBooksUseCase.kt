@@ -65,6 +65,9 @@ class ExportBooksUseCase @Inject constructor(
                 "id" to book.id,
                 "title" to book.title,
                 "author" to book.author,
+                "isbn" to book.isbn,
+                "originalTitle" to book.originalTitle,
+                "originalAuthor" to book.originalAuthor,
                 "description" to book.description,
                 "publishDate" to book.publishDate,
                 "language" to book.language,
@@ -78,11 +81,17 @@ class ExportBooksUseCase @Inject constructor(
                 "isRead" to book.isRead,
                 "dateAdded" to book.dateAdded,
                 "dateStarted" to book.dateStarted,
-                "dateFinished" to book.dateFinished
+                "dateFinished" to book.dateFinished,
+                "audiobookshelfId" to book.audiobookshelfId,
+                "uploadedToCloudApi" to book.uploadedToCloudApi,
+                "uploadedViaEmail" to book.uploadedViaEmail
             )
         }
 
-        val prettyGson = GsonBuilder().setPrettyPrinting().create()
+        val prettyGson = GsonBuilder()
+            .setPrettyPrinting()
+            .serializeNulls()  // Include null values in JSON
+            .create()
         val json = prettyGson.toJson(mapOf("books" to exportData))
         return json
     }
@@ -102,6 +111,9 @@ class ExportBooksUseCase @Inject constructor(
             addElement(doc, bookElement, "id", book.id.toString())
             addElement(doc, bookElement, "title", book.title)
             addElement(doc, bookElement, "author", book.author)
+            addElement(doc, bookElement, "isbn", book.isbn)
+            addElement(doc, bookElement, "originalTitle", book.originalTitle)
+            addElement(doc, bookElement, "originalAuthor", book.originalAuthor)
             addElement(doc, bookElement, "description", book.description)
             addElement(doc, bookElement, "publishDate", book.publishDate)
             addElement(doc, bookElement, "language", book.language)
@@ -116,6 +128,9 @@ class ExportBooksUseCase @Inject constructor(
             addElement(doc, bookElement, "dateAdded", book.dateAdded.toString())
             addElement(doc, bookElement, "dateStarted", book.dateStarted?.toString())
             addElement(doc, bookElement, "dateFinished", book.dateFinished?.toString())
+            addElement(doc, bookElement, "audiobookshelfId", book.audiobookshelfId)
+            addElement(doc, bookElement, "uploadedToCloudApi", book.uploadedToCloudApi.toString())
+            addElement(doc, bookElement, "uploadedViaEmail", book.uploadedViaEmail.toString())
         }
 
         val transformerFactory = TransformerFactory.newInstance()

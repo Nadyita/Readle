@@ -1,5 +1,9 @@
 package com.readle.app.ui.viewmodel
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.readle.app.data.model.BookEntity
@@ -10,7 +14,9 @@ import com.readle.app.data.preferences.ThemeMode
 import com.readle.app.data.repository.BookRepository
 import com.readle.app.domain.usecase.ExportBooksUseCase
 import com.readle.app.domain.usecase.ImportBooksUseCase
+import com.readle.app.service.AudiobookshelfImportService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -38,7 +44,7 @@ sealed class AudiobookshelfLoginState {
 
 sealed class AudiobookshelfImportState {
     object Idle : AudiobookshelfImportState()
-    object Loading : AudiobookshelfImportState()
+    data class Loading(val current: Int = 0, val total: Int = 0) : AudiobookshelfImportState()
     data class Success(val imported: Int, val updated: Int, val total: Int) : AudiobookshelfImportState()
     data class Error(val message: String) : AudiobookshelfImportState()
 }
@@ -65,6 +71,7 @@ sealed class EmailTestState {
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val settingsDataStore: SettingsDataStore,
     private val bookRepository: BookRepository,
     private val exportBooksUseCase: ExportBooksUseCase,
@@ -73,6 +80,43 @@ class SettingsViewModel @Inject constructor(
     private val syncPocketbookUseCase: com.readle.app.domain.usecase.SyncPocketbookUseCase,
     private val pocketbookEmailService: com.readle.app.data.api.pocketbook.PocketbookEmailService
 ) : ViewModel() {
+
+    private val importBroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                AudiobookshelfImportService.ACTION_PROGRESS -> {
+                    val current = intent.getIntExtra(AudiobookshelfImportService.EXTRA_CURRENT, 0)
+                    val total = intent.getIntExtra(AudiobookshelfImportService.EXTRA_TOTAL, 0)
+                    _audiobookshelfImportState.value = AudiobookshelfImportState.Loading(current, total)
+                }
+                AudiobookshelfImportService.ACTION_COMPLETE -> {
+                    val imported = intent.getIntExtra(AudiobookshelfImportService.EXTRA_IMPORTED, 0)
+                    val updated = intent.getIntExtra(AudiobookshelfImportService.EXTRA_UPDATED, 0)
+                    val total = intent.getIntExtra(AudiobookshelfImportService.EXTRA_TOTAL, 0)
+                    _audiobookshelfImportState.value = AudiobookshelfImportState.Success(imported, updated, total)
+                }
+                AudiobookshelfImportService.ACTION_ERROR -> {
+                    val message = intent.getStringExtra(AudiobookshelfImportService.EXTRA_ERROR_MESSAGE) ?: "Import failed"
+                    _audiobookshelfImportState.value = AudiobookshelfImportState.Error(message)
+                }
+            }
+        }
+    }
+
+    init {
+        // Register broadcast receiver for import updates
+        val filter = IntentFilter().apply {
+            addAction(AudiobookshelfImportService.ACTION_PROGRESS)
+            addAction(AudiobookshelfImportService.ACTION_COMPLETE)
+            addAction(AudiobookshelfImportService.ACTION_ERROR)
+        }
+        context.registerReceiver(importBroadcastReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        context.unregisterReceiver(importBroadcastReceiver)
+    }
 
     val themeMode: StateFlow<ThemeMode> = settingsDataStore.themeMode.stateIn(
         scope = viewModelScope,
@@ -345,7 +389,6 @@ class SettingsViewModel @Inject constructor(
 
     fun importFromAudiobookshelf() {
         viewModelScope.launch {
-            _audiobookshelfImportState.value = AudiobookshelfImportState.Loading
             try {
                 val token = audiobookshelfApiToken.value
                 if (token.isBlank()) {
@@ -363,50 +406,13 @@ class SettingsViewModel @Inject constructor(
                     return@launch
                 }
 
-                audiobookshelfApiClient.initialize(serverUrl)
-
-                // Get existing books for matching
-                val existingBooks = bookRepository.getAllBooks().first()
-
-                // Import from Audiobookshelf
-                val result = audiobookshelfApiClient.importEbooks(token, existingBooks)
-
-                result.fold(
-                    onSuccess = { importedBooks ->
-                        // Track statistics
-                        var newBooks = 0
-                        var updatedBooks = 0
-
-                        // Save/update all imported books
-                        for (book in importedBooks) {
-                            if (book.id == 0L) {
-                                // New book
-                                bookRepository.insertBook(book)
-                                newBooks++
-                            } else {
-                                // Update existing book
-                                bookRepository.updateBook(book)
-                                updatedBooks++
-                            }
-                        }
-
-                        _audiobookshelfImportState.value = AudiobookshelfImportState.Success(
-                            imported = newBooks,
-                            updated = updatedBooks,
-                            total = importedBooks.size
-                        )
-                    },
-                    onFailure = { error ->
-                        android.util.Log.e("SettingsViewModel", "Import failed: ${error.message}", error)
-                        _audiobookshelfImportState.value = AudiobookshelfImportState.Error(
-                            error.message ?: "Import failed"
-                        )
-                    }
-                )
+                // Start foreground service for import
+                _audiobookshelfImportState.value = AudiobookshelfImportState.Loading()
+                AudiobookshelfImportService.start(context, serverUrl, token)
             } catch (e: Exception) {
-                android.util.Log.e("SettingsViewModel", "Import exception: ${e.message}", e)
+                android.util.Log.e("SettingsViewModel", "Failed to start import service: ${e.message}", e)
                 _audiobookshelfImportState.value = AudiobookshelfImportState.Error(
-                    e.message ?: "Import failed"
+                    e.message ?: "Failed to start import"
                 )
             }
         }

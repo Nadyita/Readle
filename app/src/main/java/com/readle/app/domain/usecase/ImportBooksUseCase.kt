@@ -86,6 +86,9 @@ class ImportBooksUseCase @Inject constructor(
                 id = 0,
                 title = bookMap["title"] as? String ?: "",
                 author = bookMap["author"] as? String ?: "",
+                isbn = bookMap["isbn"] as? String,
+                originalTitle = bookMap["originalTitle"] as? String,
+                originalAuthor = bookMap["originalAuthor"] as? String,
                 description = bookMap["description"] as? String,
                 publishDate = bookMap["publishDate"] as? String,
                 language = bookMap["language"] as? String,
@@ -103,7 +106,10 @@ class ImportBooksUseCase @Inject constructor(
                 isRead = bookMap["isRead"] as? Boolean ?: false,
                 dateAdded = (bookMap["dateAdded"] as? Double)?.toLong() ?: System.currentTimeMillis(),
                 dateStarted = (bookMap["dateStarted"] as? Double)?.toLong(),
-                dateFinished = (bookMap["dateFinished"] as? Double)?.toLong()
+                dateFinished = (bookMap["dateFinished"] as? Double)?.toLong(),
+                audiobookshelfId = bookMap["audiobookshelfId"] as? String,
+                uploadedToCloudApi = bookMap["uploadedToCloudApi"] as? Boolean ?: false,
+                uploadedViaEmail = bookMap["uploadedViaEmail"] as? Boolean ?: false
             )
         }
     }
@@ -126,6 +132,9 @@ class ImportBooksUseCase @Inject constructor(
                 id = 0,
                 title = getElementText(bookNode, "title") ?: "",
                 author = getElementText(bookNode, "author") ?: "",
+                isbn = getElementText(bookNode, "isbn"),
+                originalTitle = getElementText(bookNode, "originalTitle"),
+                originalAuthor = getElementText(bookNode, "originalAuthor"),
                 description = getElementText(bookNode, "description"),
                 publishDate = getElementText(bookNode, "publishDate"),
                 language = getElementText(bookNode, "language"),
@@ -140,7 +149,10 @@ class ImportBooksUseCase @Inject constructor(
                 dateAdded = getElementText(bookNode, "dateAdded")?.toLongOrNull()
                     ?: System.currentTimeMillis(),
                 dateStarted = getElementText(bookNode, "dateStarted")?.toLongOrNull(),
-                dateFinished = getElementText(bookNode, "dateFinished")?.toLongOrNull()
+                dateFinished = getElementText(bookNode, "dateFinished")?.toLongOrNull(),
+                audiobookshelfId = getElementText(bookNode, "audiobookshelfId"),
+                uploadedToCloudApi = getElementText(bookNode, "uploadedToCloudApi")?.toBoolean() ?: false,
+                uploadedViaEmail = getElementText(bookNode, "uploadedViaEmail")?.toBoolean() ?: false
             )
             books.add(book)
         }

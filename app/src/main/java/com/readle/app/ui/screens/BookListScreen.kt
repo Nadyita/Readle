@@ -46,6 +46,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Undo
@@ -121,6 +122,7 @@ fun BookListScreen(
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showOptionsMenu by remember { mutableStateOf(false) }
+    var showSortMenu by remember { mutableStateOf(false) }
     var showReuploadConfirmDialog by remember { mutableStateOf(false) }
     var hasPocketbookCreds by remember { mutableStateOf(false) }
     var showUndoButton by remember { mutableStateOf(false) }
@@ -256,6 +258,27 @@ fun BookListScreen(
                     }
                 },
                 actions = {
+                    // Sort button
+                    Box {
+                        IconButton(onClick = { showSortMenu = true }) {
+                            Icon(Icons.Default.Sort, contentDescription = stringResource(R.string.action_sort))
+                        }
+                        DropdownMenu(
+                            expanded = showSortMenu,
+                            onDismissRequest = { showSortMenu = false }
+                        ) {
+                            com.readle.app.data.model.SortOrder.values().forEach { sortOrder ->
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(sortOrder.displayNameResId)) },
+                                    onClick = {
+                                        viewModel.setSortOrder(sortOrder)
+                                        showSortMenu = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.cd_settings))
                     }

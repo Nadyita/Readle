@@ -92,8 +92,9 @@ class BookListViewModel @Inject constructor(
         _ownedFilter,
         _readFilter,
         _viewFilter,
+        settingsDataStore.bookSortOrder,
         bookRepository.getAllBooks()
-    ) { ownedFilter, readFilter, viewFilter, allBooks ->
+    ) { ownedFilter, readFilter, viewFilter, sortOrder, allBooks ->
         // Apply owned/read filters
         val filteredByStatus = allBooks.filter { book ->
             val matchesOwned = when (ownedFilter) {
@@ -110,7 +111,7 @@ class BookListViewModel @Inject constructor(
         }
         
         if (viewFilter.isEmpty()) {
-            filteredByStatus.sortedBy { it.title.lowercase() }
+            applySortOrder(filteredByStatus, sortOrder)
         } else {
             // Check for field-specific search prefixes: "series=", "title=", "author="
             val (searchField, searchQuery) = parseFieldFilter(viewFilter)
@@ -142,7 +143,7 @@ class BookListViewModel @Inject constructor(
                 }
             }
             
-            // Sort results: by series number if filtering by series, otherwise by title
+            // Sort results: by series number if filtering by series, otherwise by selected sort order
             if (searchField == "series") {
                 // When filtering by series, sort by series number (then by title as fallback)
                 exactMatches.sortedWith(compareBy(
@@ -153,8 +154,8 @@ class BookListViewModel @Inject constructor(
                     { it.title.lowercase() }
                 ))
             } else {
-                // Default: sort by title
-                exactMatches.sortedBy { it.title.lowercase() } + wordMatches.sortedBy { it.title.lowercase() }
+                // Apply selected sort order
+                applySortOrder(exactMatches, sortOrder) + applySortOrder(wordMatches, sortOrder)
             }
         }
     }.stateIn(
@@ -573,5 +574,28 @@ class BookListViewModel @Inject constructor(
             .replace("Ö", "Oe", ignoreCase = false)
             .replace("Ü", "Ue", ignoreCase = false)
             .replace("ß", "ss", ignoreCase = true)
+    }
+    
+    /**
+     * Applies the selected sort order to a list of books.
+     */
+    private fun applySortOrder(books: List<BookEntity>, sortOrder: com.readle.app.data.model.SortOrder): List<BookEntity> {
+        return when (sortOrder) {
+            com.readle.app.data.model.SortOrder.TITLE_ASC -> books.sortedBy { it.title.lowercase() }
+            com.readle.app.data.model.SortOrder.TITLE_DESC -> books.sortedByDescending { it.title.lowercase() }
+            com.readle.app.data.model.SortOrder.AUTHOR_ASC -> books.sortedBy { it.author.lowercase() }
+            com.readle.app.data.model.SortOrder.AUTHOR_DESC -> books.sortedByDescending { it.author.lowercase() }
+            com.readle.app.data.model.SortOrder.DATE_ADDED_ASC -> books.sortedBy { it.dateAdded }
+            com.readle.app.data.model.SortOrder.DATE_ADDED_DESC -> books.sortedByDescending { it.dateAdded }
+        }
+    }
+    
+    /**
+     * Sets the sort order for the book list.
+     */
+    fun setSortOrder(sortOrder: com.readle.app.data.model.SortOrder) {
+        viewModelScope.launch {
+            settingsDataStore.setBookSortOrder(sortOrder)
+        }
     }
 }

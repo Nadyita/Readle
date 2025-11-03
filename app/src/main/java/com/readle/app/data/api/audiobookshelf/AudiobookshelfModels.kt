@@ -54,7 +54,15 @@ data class AudiobookshelfLibraryItem(
     @SerializedName("media")
     val media: AudiobookshelfMedia,
     @SerializedName("userMediaProgress")
-    val userMediaProgress: AudiobookshelfMediaProgress?
+    val userMediaProgress: AudiobookshelfMediaProgress?,
+    @SerializedName("addedAt")
+    val addedAt: Long? = null,
+    @SerializedName("mtimeMs")
+    val mtimeMs: Long? = null,
+    @SerializedName("birthtimeMs")
+    val birthtimeMs: Long? = null,
+    @SerializedName("ctimeMs")
+    val ctimeMs: Long? = null
 )
 
 data class AudiobookshelfMedia(
@@ -87,7 +95,13 @@ data class AudiobookshelfFileMetadata(
     @SerializedName("ext")
     val ext: String?,
     @SerializedName("size")
-    val size: Long?
+    val size: Long?,
+    @SerializedName("mtimeMs")
+    val mtimeMs: Long? = null,
+    @SerializedName("birthtimeMs")
+    val birthtimeMs: Long? = null,
+    @SerializedName("ctimeMs")
+    val ctimeMs: Long? = null
 )
 
 data class AudiobookshelfMetadata(
