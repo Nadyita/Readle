@@ -165,6 +165,16 @@ class TitleSeriesCleanupTest {
     }
 
     @Test
+    fun `cleanup - series with Saga suffix without hyphen`() {
+        val result = TitleSeriesCleanup.cleanupTitle(
+            rawTitle = "FederLeicht 1 - Wie fallender Schnee",
+            series = "FederLeichtSaga",
+            seriesNumber = "1"
+        )
+        assertEquals("Wie fallender Schnee", result)
+    }
+
+    @Test
     fun `cleanup - series with Reihe suffix`() {
         val result = TitleSeriesCleanup.cleanupTitle(
             rawTitle = "Zeitreisende 3 - Die dritte Mission",
@@ -192,6 +202,46 @@ class TitleSeriesCleanupTest {
             seriesNumber = "2"
         )
         assertEquals("Dark Secrets", result)
+    }
+
+    @Test
+    fun `cleanup - series with Trilogie suffix`() {
+        val result = TitleSeriesCleanup.cleanupTitle(
+            rawTitle = "Pan 1 - Das geheime Vermächtnis des Pan",
+            series = "Pan-Trilogie",
+            seriesNumber = "1"
+        )
+        assertEquals("geheime Vermächtnis des Pan, Das", result)
+    }
+
+    @Test
+    fun `cleanup - series with Trilogia suffix (Spanish Italian)`() {
+        val result = TitleSeriesCleanup.cleanupTitle(
+            rawTitle = "Hyperion-Trilogía 2 - The Fall of Hyperion",
+            series = "Hyperion-Trilogía",
+            seriesNumber = "2"
+        )
+        assertEquals("Fall of Hyperion, The", result)
+    }
+
+    @Test
+    fun `cleanup - series with Dilogie suffix`() {
+        val result = TitleSeriesCleanup.cleanupTitle(
+            rawTitle = "Erdsee 1 - Der Magier der Erdsee",
+            series = "Erdsee-Dilogie",
+            seriesNumber = "1"
+        )
+        assertEquals("Magier der Erdsee, Der", result)
+    }
+
+    @Test
+    fun `cleanup - series with Tetralogie suffix`() {
+        val result = TitleSeriesCleanup.cleanupTitle(
+            rawTitle = "Hyperion 2 - Der Sturz von Hyperion",
+            series = "Hyperion-Tetralogie",
+            seriesNumber = "2"
+        )
+        assertEquals("Sturz von Hyperion, Der", result)
     }
 
     // =================================================================
@@ -228,6 +278,17 @@ class TitleSeriesCleanupTest {
         // Falls der Titel das decimal format direkt hat, sollte es funktionieren
         // Fallback auf letter suffix sollte greifen
         assertEquals("Pferd und sein Junge, Das", result)
+    }
+
+    @Test
+    fun `cleanup - decimal number with trailing zeros normalized`() {
+        // seriesNumber has trailing zeros but title doesn't
+        val result = TitleSeriesCleanup.cleanupTitle(
+            rawTitle = "Centro 2.5 - Dunkle Erinnerungen",
+            series = "Centro",
+            seriesNumber = "2.50"
+        )
+        assertEquals("Dunkle Erinnerungen", result)
     }
 
     // =================================================================
@@ -452,6 +513,61 @@ class TitleSeriesCleanupTest {
     // =================================================================
     // Edge Cases
     // =================================================================
+
+    @Test
+    fun `edge case - series name with space matches title with hyphen`() {
+        // Series name has spaces but title uses hyphens instead
+        val result = TitleSeriesCleanup.cleanupTitle(
+            rawTitle = "Zimt-Trilogie #1 - Foo Bar Baz",
+            series = "Zimt Trilogie",
+            seriesNumber = "1"
+        )
+        assertEquals("Foo Bar Baz", result)
+    }
+
+    @Test
+    fun `edge case - series name with space matches title with hyphen 2`() {
+        // Series name has spaces but title uses hyphens instead
+        val result = TitleSeriesCleanup.cleanupTitle(
+            rawTitle = "Zimt-Trilogie 1 - Foo Bar Baz",
+            series = "Zimt Trilogie",
+            seriesNumber = "1"
+        )
+        assertEquals("Foo Bar Baz", result)
+    }
+
+    @Test
+    fun `edge case - series name with hyphen matches title with space`() {
+        // Series name has hyphens but title uses spaces instead (reverse case)
+        val result = TitleSeriesCleanup.cleanupTitle(
+            rawTitle = "Zimt Trilogie #1 - Foo Bar Baz",
+            series = "Zimt-Trilogie",
+            seriesNumber = "1"
+        )
+        assertEquals("Foo Bar Baz", result)
+    }
+
+    @Test
+    fun `edge case - series name with space matches title with hyphen - band 2`() {
+        // Series name has spaces but title uses hyphens - testing with band 2
+        val result = TitleSeriesCleanup.cleanupTitle(
+            rawTitle = "Zimt-Trilogie 2 - Zimt und zurück",
+            series = "Zimt Trilogie",
+            seriesNumber = "2"
+        )
+        assertEquals("Zimt und zurück", result)
+    }
+
+    @Test
+    fun `edge case - series with article and space matches title with hyphen`() {
+        // Series name has spaces but title uses hyphens instead (with article)
+        val result = TitleSeriesCleanup.cleanupTitle(
+            rawTitle = "Drei-Körper-Problem #2 - Der dunkle Wald, Das",
+            series = "Das Drei Körper Problem",
+            seriesNumber = "2"
+        )
+        assertEquals("dunkle Wald, Der", result)
+    }
 
     @Test
     fun `edge case - series name equals title after cleanup`() {
