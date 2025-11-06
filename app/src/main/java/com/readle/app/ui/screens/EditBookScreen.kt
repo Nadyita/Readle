@@ -43,9 +43,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -56,6 +58,7 @@ import com.readle.app.ui.util.htmlToAnnotatedString
 import com.readle.app.ui.viewmodel.EditBookUiState
 import com.readle.app.ui.viewmodel.EditBookViewModel
 import com.readle.app.ui.viewmodel.EditBookUploadState
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,6 +72,8 @@ fun EditBookScreen(
     val uploadState by viewModel.uploadState.collectAsState()
     val isEmailConfigured by viewModel.isEmailConfigured.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     var isEditMode by remember { mutableStateOf(false) }
     var title by remember { mutableStateOf("") }
@@ -411,8 +416,19 @@ fun EditBookScreen(
                         ) {
                             (1..5).forEach { star ->
                                 IconButton(
-                                    onClick = if (isEditMode) { { rating = star } } else { {} },
-                                    enabled = isEditMode
+                                    onClick = { 
+                                        rating = star
+                                        // Auto-save rating in view mode
+                                        if (!isEditMode) {
+                                            viewModel.updateRating(bookId, star)
+                                            // Show snackbar notification
+                                            coroutineScope.launch {
+                                                snackbarHostState.showSnackbar(
+                                                    context.getString(R.string.msg_rating_updated, star)
+                                                )
+                                            }
+                                        }
+                                    }
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Star,

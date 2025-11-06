@@ -135,6 +135,21 @@ class EditBookViewModel @Inject constructor(
         }
     }
 
+    fun updateRating(bookId: Long, rating: Int) {
+        viewModelScope.launch {
+            try {
+                val existingBook = bookRepository.getBookById(bookId)
+                if (existingBook != null) {
+                    val updatedBook = existingBook.copy(rating = rating)
+                    bookRepository.updateBook(updatedBook)
+                    // Don't change UI state - just silently update the book
+                }
+            } catch (e: Exception) {
+                // Silently fail - rating update is not critical
+            }
+        }
+    }
+
     fun resetState() {
         _uiState.value = EditBookUiState.Idle
     }
