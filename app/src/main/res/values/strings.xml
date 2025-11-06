@@ -18,6 +18,7 @@
     <string name="action_search_title_author">Search by Title/Author</string>
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_upload_to_pocketbook">Upload to PocketBook</string>
     <string name="action_import">Import</string>
     <string name="action_export">Export</string>
     <string name="action_share_export">Share Export</string>

@@ -389,6 +389,8 @@ class AudiobookshelfApiClient @Inject constructor() {
         if (series != null) {
             val isAuthorName = series.equals(metadata.authorName, ignoreCase = true) ||
                                series.equals(metadata.authorNameLF, ignoreCase = true) ||
+                               series.equals(author, ignoreCase = true) ||  // Also check normalized author
+                               series.equals(originalAuthor, ignoreCase = true) ||  // And original author
                                metadata.authors?.any { it.name.equals(series, ignoreCase = true) } == true
             if (isAuthorName) {
                 series = null

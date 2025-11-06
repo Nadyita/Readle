@@ -15,9 +15,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -26,8 +28,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -49,6 +55,7 @@ import com.readle.app.data.model.ReadingCategory
 import com.readle.app.ui.util.htmlToAnnotatedString
 import com.readle.app.ui.viewmodel.EditBookUiState
 import com.readle.app.ui.viewmodel.EditBookViewModel
+import com.readle.app.ui.viewmodel.EditBookUploadState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,7 +66,11 @@ fun EditBookScreen(
     viewModel: EditBookViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val uploadState by viewModel.uploadState.collectAsState()
+    val isEmailConfigured by viewModel.isEmailConfigured.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
+    var isEditMode by remember { mutableStateOf(false) }
     var title by remember { mutableStateOf("") }
     var author by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -91,7 +102,22 @@ fun EditBookScreen(
                 isRead = book.isRead
             }
             is EditBookUiState.Success -> {
+                isEditMode = false
                 onNavigateBack()
+            }
+            else -> {}
+        }
+    }
+
+    LaunchedEffect(uploadState) {
+        when (val state = uploadState) {
+            is EditBookUploadState.Success -> {
+                snackbarHostState.showSnackbar("Buch erfolgreich hochgeladen")
+                viewModel.resetUploadState()
+            }
+            is EditBookUploadState.Error -> {
+                snackbarHostState.showSnackbar("Upload fehlgeschlagen: ${state.message}")
+                viewModel.resetUploadState()
             }
             else -> {}
         }
@@ -105,9 +131,17 @@ fun EditBookScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
+                },
+                actions = {
+                    if (!isEditMode) {
+                        IconButton(onClick = { isEditMode = true }) {
+                            Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.cd_edit_book))
+                        }
+                    }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         when (uiState) {
             is EditBookUiState.Loading, is EditBookUiState.Idle -> {
@@ -145,26 +179,58 @@ fun EditBookScreen(
                         .padding(16.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
-                    OutlinedTextField(
-                        value = title,
-                        onValueChange = { title = it },
-                        label = { Text(stringResource(R.string.field_title)) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    // Title field
+                    if (isEditMode) {
+                        OutlinedTextField(
+                            value = title,
+                            onValueChange = { title = it },
+                            label = { Text(stringResource(R.string.field_title)) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = stringResource(R.string.field_title),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    // Author field
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        OutlinedTextField(
-                            value = author,
-                            onValueChange = { author = it },
-                            label = { Text(stringResource(R.string.field_author)) },
-                            modifier = Modifier.weight(1f)
-                        )
+                        if (isEditMode) {
+                            OutlinedTextField(
+                                value = author,
+                                onValueChange = { author = it },
+                                label = { Text(stringResource(R.string.field_author)) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        } else {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.field_author),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = author,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+                            }
+                        }
                         
                         if (author.isNotBlank()) {
                             IconButton(onClick = { 
@@ -181,52 +247,89 @@ fun EditBookScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedTextField(
-                            value = series,
-                            onValueChange = { series = it },
-                            label = { Text(stringResource(R.string.field_series)) },
-                            modifier = Modifier.weight(1f)
-                        )
-                        
-                        if (series.isNotBlank()) {
-                            IconButton(onClick = { 
-                                onFilterByText("series=$series")
-                                onNavigateBack()
-                            }) {
-                                Icon(
-                                    imageVector = Icons.Default.Search,
-                                    contentDescription = "Filter books in this series"
+                    // Series field - only show in edit mode or if series is not blank
+                    if (isEditMode || series.isNotBlank()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (isEditMode) {
+                                OutlinedTextField(
+                                    value = series,
+                                    onValueChange = { series = it },
+                                    label = { Text(stringResource(R.string.field_series)) },
+                                    modifier = Modifier.weight(1f)
                                 )
+                            } else {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = stringResource(R.string.field_series),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = series,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        modifier = Modifier.padding(vertical = 8.dp)
+                                    )
+                                }
+                            }
+                            
+                            if (series.isNotBlank()) {
+                                IconButton(onClick = { 
+                                    onFilterByText("series=$series")
+                                    onNavigateBack()
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = "Filter books in this series"
+                                    )
+                                }
                             }
                         }
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
+                    // Series Number and eBook
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        OutlinedTextField(
-                            value = seriesNumber,
-                            onValueChange = { seriesNumber = it },
-                            label = { Text(stringResource(R.string.field_series_number)) },
-                            modifier = Modifier.weight(1f)
-                        )
+                        // Series Number - only show in edit mode or if series number is not blank
+                        if (isEditMode || seriesNumber.isNotBlank()) {
+                            if (isEditMode) {
+                                OutlinedTextField(
+                                    value = seriesNumber,
+                                    onValueChange = { seriesNumber = it },
+                                    label = { Text(stringResource(R.string.field_series_number)) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            } else {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = stringResource(R.string.field_series_number),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = seriesNumber,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        modifier = Modifier.padding(vertical = 8.dp)
+                                    )
+                                }
+                            }
+                        }
 
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
+                            modifier = if (isEditMode || seriesNumber.isNotBlank()) Modifier.weight(1f) else Modifier.fillMaxWidth()
                         ) {
                             androidx.compose.material3.Checkbox(
                                 checked = isEBook,
-                                onCheckedChange = { isEBook = it }
+                                onCheckedChange = if (isEditMode) { { isEBook = it } } else null,
+                                enabled = isEditMode
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(stringResource(R.string.field_is_ebook))
@@ -235,7 +338,7 @@ fun EditBookScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Display description as HTML (read-only)
+                    // Display description as HTML (always read-only)
                     if (description.isNotBlank()) {
                         Column(
                             modifier = Modifier.fillMaxWidth()
@@ -256,10 +359,14 @@ fun EditBookScreen(
                                 Text(
                                     text = description.htmlToAnnotatedString(),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier
-                                        .padding(12.dp)
-                                        .heightIn(max = 120.dp)
-                                        .verticalScroll(scrollState),
+                                    modifier = if (isEditMode) {
+                                        Modifier
+                                            .padding(12.dp)
+                                            .heightIn(max = 120.dp)
+                                            .verticalScroll(scrollState)
+                                    } else {
+                                        Modifier.padding(12.dp)
+                                    },
                                     maxLines = Int.MAX_VALUE
                                 )
                             }
@@ -269,13 +376,29 @@ fun EditBookScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    OutlinedTextField(
-                        value = comments,
-                        onValueChange = { comments = it },
-                        label = { Text(stringResource(R.string.field_comments)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 3
-                    )
+                    // Comments field
+                    if (isEditMode) {
+                        OutlinedTextField(
+                            value = comments,
+                            onValueChange = { comments = it },
+                            label = { Text(stringResource(R.string.field_comments)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 3
+                        )
+                    } else if (comments.isNotBlank()) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = stringResource(R.string.field_comments),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = comments,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -287,7 +410,10 @@ fun EditBookScreen(
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
                             (1..5).forEach { star ->
-                                IconButton(onClick = { rating = star }) {
+                                IconButton(
+                                    onClick = if (isEditMode) { { rating = star } } else { {} },
+                                    enabled = isEditMode
+                                ) {
                                     Icon(
                                         imageVector = Icons.Default.Star,
                                         contentDescription = stringResource(R.string.label_stars, star),
@@ -301,29 +427,83 @@ fun EditBookScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    Button(
-                        onClick = {
-                            viewModel.updateBook(
-                                bookId = bookId,
-                                title = title,
-                                author = author,
-                                description = description.ifBlank { null },
-                                publishDate = null,
-                                language = null,
-                                originalLanguage = null,
-                                series = series.ifBlank { null },
-                                seriesNumber = seriesNumber.ifBlank { null },
-                                isEBook = isEBook,
-                                comments = comments.ifBlank { null },
-                                rating = rating,
-                                isOwned = isOwned,
-                                isRead = isRead
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = title.isNotBlank() && author.isNotBlank()
-                    ) {
-                        Text(stringResource(R.string.action_save))
+                    // Buttons
+                    if (isEditMode) {
+                        // Edit mode: Show Save and Cancel buttons
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { 
+                                    // Reset to loaded book values
+                                    when (val state = uiState) {
+                                        is EditBookUiState.BookLoaded -> {
+                                            val book = state.book
+                                            title = book.title
+                                            author = book.author
+                                            description = book.description ?: ""
+                                            series = book.series ?: ""
+                                            seriesNumber = book.seriesNumber ?: ""
+                                            isEBook = book.isEBook
+                                            comments = book.comments ?: ""
+                                            rating = book.rating
+                                            isOwned = book.isOwned
+                                            isRead = book.isRead
+                                        }
+                                        else -> {}
+                                    }
+                                    isEditMode = false
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(stringResource(R.string.action_cancel))
+                            }
+
+                            Button(
+                                onClick = {
+                                    viewModel.updateBook(
+                                        bookId = bookId,
+                                        title = title,
+                                        author = author,
+                                        description = description.ifBlank { null },
+                                        publishDate = null,
+                                        language = null,
+                                        originalLanguage = null,
+                                        series = series.ifBlank { null },
+                                        seriesNumber = seriesNumber.ifBlank { null },
+                                        isEBook = isEBook,
+                                        comments = comments.ifBlank { null },
+                                        rating = rating,
+                                        isOwned = isOwned,
+                                        isRead = isRead
+                                    )
+                                },
+                                modifier = Modifier.weight(1f),
+                                enabled = title.isNotBlank() && author.isNotBlank()
+                            ) {
+                                Text(stringResource(R.string.action_save))
+                            }
+                        }
+                    } else {
+                        // View mode: Show Upload button (only for eBooks and if email is configured)
+                        val currentBook = (uiState as? EditBookUiState.BookLoaded)?.book
+                        if (currentBook?.isEBook == true && isEmailConfigured) {
+                            Button(
+                                onClick = { viewModel.uploadBookToPocketbook(bookId) },
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = uploadState !is EditBookUploadState.Uploading
+                            ) {
+                                if (uploadState is EditBookUploadState.Uploading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                }
+                                Text(stringResource(R.string.action_upload_to_pocketbook))
+                            }
+                        }
                     }
                 }
             }
