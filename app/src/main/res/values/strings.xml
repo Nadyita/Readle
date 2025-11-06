@@ -42,6 +42,7 @@
     <!-- Settings -->
     <string name="settings_title">Settings</string>
     <string name="settings_theme">Theme</string>
+    <string name="settings_theme_description">Choose between light and dark design, or automatically follow your system settings.</string>
     <string name="settings_scanner">Scanner Library</string>
     <string name="settings_export_format">Export Format</string>
     <string name="theme_light">Light</string>
@@ -53,9 +54,15 @@
     <string name="format_xml">XML</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_scanner">Scanner</string>
-    <string name="settings_section_apis">Book Search APIs</string>
+    <string name="settings_section_apis">Book Search Services</string>
+    <string name="api_dnb_name">Deutsche Nationalbibliothek (DNB)</string>
+    <string name="api_google_books_name">Google Books</string>
+    <string name="api_isbndb_name">ISBNdb</string>
+    <string name="api_isbndb_unavailable">Requires API token (currently unavailable)</string>
     <string name="settings_section_audiobookshelf">Audiobookshelf</string>
+    <string name="settings_audiobookshelf_description">Audiobookshelf is a self-hosted server for audiobooks and eBooks. Import your eBook collection and keep your reading status in sync.</string>
     <string name="settings_section_pocketbook">PocketBook Cloud</string>
+    <string name="settings_pocketbook_title">PocketBook</string>
     <string name="settings_section_data">Data Management</string>
     <string name="action_sync_reading_progress">Sync Reading Progress</string>
     <string name="msg_syncing_pocketbook">Syncing with PocketBook Cloud…</string>
@@ -156,13 +163,37 @@
     <string name="abs_import_books">Import eBooks from Audiobookshelf</string>
     <string name="abs_import_success">Imported %1$d new books, updated %2$d existing books (%3$d total)</string>
     <string name="abs_import_in_progress">Importing eBooks from Audiobookshelf…</string>
+    <string name="abs_last_sync">Last successful import: %s</string>
+    <string name="abs_last_sync_label">Last import:</string>
+    <string name="abs_never_synced">never</string>
+    <string name="abs_sync_today">today, %s</string>
+    <string name="abs_sync_yesterday">yesterday</string>
+    <string name="abs_sync_days_ago">%d days ago</string>
+    <string name="abs_http_warning_title">⚠️ HTTP (not HTTPS)</string>
+    <string name="abs_http_warning_description">Android blocks unencrypted HTTP connections. Use HTTPS or enable Cleartext-Traffic in the app settings.</string>
+    <string name="abs_import_complete">Import complete: %1$d new, %2$d updated (%3$d total)</string>
+    <string name="dialog_notification_permission_title">Import runs in background</string>
+    <string name="dialog_notification_permission_message">The import may take several minutes. With a notification, you can track the progress even if you close the app.</string>
+    <string name="action_allow_notification">Allow notification</string>
+    <string name="action_continue_without">Continue without</string>
     <string name="dialog_unmatched_books_title">Unmatched Books Found</string>
+    <string name="dialog_unmatched_books_description">The following books were read in PocketBook but not found in your library:</string>
+    <string name="dialog_unmatched_books_question">Would you like to add these books to your library as \'READ\'?</string>
+    <string name="dialog_unmatched_books_add">Add Books</string>
+    <string name="dialog_unmatched_books_skip">Skip</string>
     
     <!-- PocketBook -->
     <string name="pocketbook_email">Email</string>
     <string name="pocketbook_email_hint">your.email@example.com</string>
     <string name="pocketbook_password">Password</string>
     <string name="pocketbook_password_hint">Your password</string>
+    <string name="pocketbook_cloud_sync_description">Fetch your reading status from PocketBook Cloud. Readle automatically updates which books you have read on your PocketBook.</string>
+    <string name="pocketbook_cloud_sync_title">Sync Reading Status</string>
+    <string name="pocketbook_email_upload_title">Upload Books via Email</string>
+    <string name="pocketbook_email_upload_description">Configure SMTP to send books to your PocketBook via email.</string>
+    <string name="pocketbook_clean_titles_title">Clean Titles</string>
+    <string name="pocketbook_clean_titles_description">Removes series name and number (e.g. \'Harry Potter 3\') from book titles during upload</string>
+    <string name="pocketbook_configure_email_button">Configure Email Settings →</string>
     <string name="action_save_credentials">Save Credentials</string>
     <string name="action_save_server_url">Save Server URL</string>
     <string name="pocketbook_email_settings_title">Email Settings (PBSync)</string>
@@ -191,5 +222,12 @@
     <string name="dialog_delete_all_title">Delete All Books?</string>
     <string name="dialog_delete_all_message">Are you sure you want to delete all books from your library? This action cannot be undone!</string>
     <string name="action_confirm_delete">Delete Everything</string>
+    <string name="settings_danger_zone_title">Danger Zone</string>
+    <string name="settings_delete_all_title">Delete All Books</string>
+    <string name="settings_delete_all_description">Deletes all books from your library. This action cannot be undone!</string>
+    <string name="settings_scanner_description">Choose the barcode scanner library for ISBN scans.</string>
+    <string name="dialog_unmatched_book_by">by %s</string>
+    <string name="dialog_unmatched_book_unknown_author">Unknown</string>
+    <string name="dialog_unmatched_book_isbn">ISBN: %s</string>
 </resources>
 

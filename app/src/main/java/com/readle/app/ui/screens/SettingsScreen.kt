@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -90,6 +91,7 @@ fun SettingsScreen(
     val pocketbookPassword by viewModel.pocketbookPassword.collectAsState()
     val pocketbookSyncState by viewModel.pocketbookSyncState.collectAsState()
     val pocketbookCleanTitles by viewModel.pocketbookCleanTitles.collectAsState()
+    val lastAudiobookshelfSyncTime by viewModel.lastAudiobookshelfSyncTime.collectAsState()
     
     // Email settings
     val smtpServer by viewModel.smtpServer.collectAsState()
@@ -107,6 +109,7 @@ fun SettingsScreen(
     var pocketbookEmailInput by remember { mutableStateOf(pocketbookEmail) }
     var pocketbookPasswordInput by remember { mutableStateOf(pocketbookPassword) }
     var showDeleteAllDialog by remember { mutableStateOf(false) }
+    var showNotificationPermissionDialog by remember { mutableStateOf(false) }
     
     // Email input states - initialize with empty strings, LaunchedEffect will load saved values
     var smtpServerInput by remember { mutableStateOf("") }
@@ -343,6 +346,7 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
+                .imePadding()
                 .verticalScroll(rememberScrollState())
         ) {
             Text(
@@ -350,6 +354,13 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = stringResource(R.string.settings_theme_description),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -443,7 +454,7 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Deutsche Nationalbibliothek (DNB)",
+                            text = stringResource(R.string.api_dnb_name),
                             style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.weight(1f)
                         )
@@ -459,7 +470,7 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Google Books",
+                            text = stringResource(R.string.api_google_books_name),
                             style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.weight(1f)
                         )
@@ -476,11 +487,11 @@ fun SettingsScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "ISBNdb",
+                                text = stringResource(R.string.api_isbndb_name),
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             Text(
-                                text = "Benötigt API-Token (derzeit nicht verfügbar)",
+                                text = stringResource(R.string.api_isbndb_unavailable),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -500,6 +511,13 @@ fun SettingsScreen(
             Text(
                 text = stringResource(R.string.settings_section_audiobookshelf),
                 style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            
+            Text(
+                text = stringResource(R.string.settings_audiobookshelf_description),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
@@ -533,12 +551,12 @@ fun SettingsScreen(
                         ) {
                             Column(modifier = Modifier.padding(12.dp)) {
                                 Text(
-                                    text = "⚠️ HTTP (nicht HTTPS)",
+                                    text = stringResource(R.string.abs_http_warning_title),
                                     style = MaterialTheme.typography.titleSmall,
                                     color = MaterialTheme.colorScheme.onErrorContainer
                                 )
                                 Text(
-                                    text = "Android blockiert unverschlüsselte HTTP-Verbindungen. Nutze HTTPS oder aktiviere Cleartext-Traffic in den App-Einstellungen.",
+                                    text = stringResource(R.string.abs_http_warning_description),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onErrorContainer
                                 )
@@ -589,11 +607,64 @@ fun SettingsScreen(
                                 Text(stringResource(R.string.abs_logout))
                             }
 
+                            // Display last sync time if available
+                            val lastSyncText = if (lastAudiobookshelfSyncTime > 0) {
+                                val now = System.currentTimeMillis()
+                                val diffMillis = now - lastAudiobookshelfSyncTime
+                                val diffDays = diffMillis / (1000 * 60 * 60 * 24)
+                                
+                                when {
+                                    diffDays < 1 -> {
+                                        // Today: show "heute, HH:mm" / "today, HH:mm"
+                                        val timeFormat = java.text.SimpleDateFormat(
+                                            "HH:mm",
+                                            java.util.Locale.getDefault()
+                                        )
+                                        stringResource(
+                                            R.string.abs_sync_today,
+                                            timeFormat.format(java.util.Date(lastAudiobookshelfSyncTime))
+                                        )
+                                    }
+                                    diffDays == 1L -> {
+                                        // Yesterday
+                                        stringResource(R.string.abs_sync_yesterday)
+                                    }
+                                    diffDays < 7 -> {
+                                        // Within a week: show "vor X Tagen" / "X days ago"
+                                        stringResource(R.string.abs_sync_days_ago, diffDays.toInt())
+                                    }
+                                    diffDays < 365 -> {
+                                        // This year: show "16. März" / "March 16"
+                                        val dateFormat = java.text.SimpleDateFormat(
+                                            "d. MMMM",
+                                            java.util.Locale.getDefault()
+                                        )
+                                        dateFormat.format(java.util.Date(lastAudiobookshelfSyncTime))
+                                    }
+                                    else -> {
+                                        // Older: show "16. März 2025" / "March 16, 2025"
+                                        val dateFormat = java.text.SimpleDateFormat(
+                                            "d. MMMM yyyy",
+                                            java.util.Locale.getDefault()
+                                        )
+                                        dateFormat.format(java.util.Date(lastAudiobookshelfSyncTime))
+                                    }
+                                }
+                            } else {
+                                stringResource(R.string.abs_never_synced)
+                            }
+                            
+                            Text(
+                                text = "${stringResource(R.string.abs_last_sync_label)} $lastSyncText",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
                             Button(
                                 onClick = {
-                                    // Check and request notification permission if needed
+                                    // Show explanation dialog before requesting notification permission
                                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                                        notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                        showNotificationPermissionDialog = true
                                     } else {
                                         viewModel.importFromAudiobookshelf()
                                     }
@@ -655,7 +726,12 @@ fun SettingsScreen(
                     if (absImportState is com.readle.app.ui.viewmodel.AudiobookshelfImportState.Success) {
                         val successState = absImportState as com.readle.app.ui.viewmodel.AudiobookshelfImportState.Success
                         Text(
-                            text = "Import complete: ${successState.imported} new, ${successState.updated} updated (${successState.total} total)",
+                            text = stringResource(
+                                R.string.abs_import_complete,
+                                successState.imported,
+                                successState.updated,
+                                successState.total
+                            ),
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -667,7 +743,7 @@ fun SettingsScreen(
 
             // PocketBook Settings Section
             Text(
-                text = "PocketBook",
+                text = stringResource(R.string.settings_pocketbook_title),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -684,11 +760,11 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "Lesestatus synchronisieren",
+                        text = stringResource(R.string.pocketbook_cloud_sync_title),
                         style = MaterialTheme.typography.titleSmall
                     )
                     Text(
-                        text = "Verbinde dich mit deinem PocketBook Cloud Account, um deinen Lesestatus zu synchronisieren.",
+                        text = stringResource(R.string.pocketbook_cloud_sync_description),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -771,11 +847,11 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "Bücher hochladen via E-Mail",
+                        text = stringResource(R.string.pocketbook_email_upload_title),
                         style = MaterialTheme.typography.titleSmall
                     )
                     Text(
-                        text = "Konfiguriere SMTP, um Bücher per E-Mail an dein PocketBook zu senden.",
+                        text = stringResource(R.string.pocketbook_email_upload_description),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -785,7 +861,7 @@ fun SettingsScreen(
                         onClick = { onNavigateToEmailSettings() },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("E-Mail-Einstellungen konfigurieren →")
+                        Text(stringResource(R.string.pocketbook_configure_email_button))
                     }
                     
                     // Title Cleaning Toggle
@@ -796,11 +872,11 @@ fun SettingsScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Titel bereinigen",
+                                text = stringResource(R.string.pocketbook_clean_titles_title),
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             Text(
-                                text = "Entfernt Seriennummern aus Buchtiteln beim Upload",
+                                text = stringResource(R.string.pocketbook_clean_titles_description),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -885,7 +961,7 @@ fun SettingsScreen(
 
             // Danger Zone - Delete All Books
             Text(
-                text = "Gefahrenzone",
+                text = stringResource(R.string.settings_danger_zone_title),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.error
             )
@@ -902,12 +978,12 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "Alle Bücher löschen",
+                        text = stringResource(R.string.settings_delete_all_title),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
                     Text(
-                        text = "Löscht alle Bücher aus deiner Bibliothek. Diese Aktion kann nicht rückgängig gemacht werden!",
+                        text = stringResource(R.string.settings_delete_all_description),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
@@ -1101,7 +1177,7 @@ fun SettingsScreen(
                 showUnmatchedBooksDialog = false
                 viewModel.resetPocketbookSyncState()
             },
-            title = { Text("Unmatched Books Found") },
+            title = { Text(stringResource(R.string.dialog_unmatched_books_title)) },
             text = {
                 Column(
                     modifier = Modifier
@@ -1109,7 +1185,7 @@ fun SettingsScreen(
                         .verticalScroll(rememberScrollState())
                 ) {
                     Text(
-                        text = "The following books were read in PocketBook but not found in your library:",
+                        text = stringResource(R.string.dialog_unmatched_books_description),
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
@@ -1131,13 +1207,16 @@ fun SettingsScreen(
                                     style = MaterialTheme.typography.titleSmall
                                 )
                                 Text(
-                                    text = "by ${book.metadata.authors ?: "Unknown"}",
+                                    text = stringResource(
+                                        R.string.dialog_unmatched_book_by,
+                                        book.metadata.authors ?: stringResource(R.string.dialog_unmatched_book_unknown_author)
+                                    ),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 if (!book.metadata.isbn.isNullOrBlank()) {
                                     Text(
-                                        text = "ISBN: ${book.metadata.isbn}",
+                                        text = stringResource(R.string.dialog_unmatched_book_isbn, book.metadata.isbn),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -1148,7 +1227,7 @@ fun SettingsScreen(
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Would you like to add these books to your library as 'READ'?",
+                        text = stringResource(R.string.dialog_unmatched_books_question),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -1166,7 +1245,7 @@ fun SettingsScreen(
                         ).show()
                     }
                 ) {
-                    Text("Add Books")
+                    Text(stringResource(R.string.dialog_unmatched_books_add))
                 }
             },
             dismissButton = {
@@ -1176,7 +1255,7 @@ fun SettingsScreen(
                         viewModel.resetPocketbookSyncState()
                     }
                 ) {
-                    Text("Skip")
+                    Text(stringResource(R.string.dialog_unmatched_books_skip))
                 }
             }
         )
@@ -1235,7 +1314,7 @@ fun SettingsScreen(
             text = {
                 Column {
                     Text(
-                        text = "Wähle die Barcode-Scanner-Bibliothek für ISBN-Scans.",
+                        text = stringResource(R.string.settings_scanner_description),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -1283,6 +1362,37 @@ fun SettingsScreen(
             confirmButton = {
                 TextButton(onClick = { showScannerDialog = false }) {
                     Text(stringResource(R.string.action_ok))
+                }
+            }
+        )
+    }
+
+    // Notification Permission Explanation Dialog
+    if (showNotificationPermissionDialog) {
+        AlertDialog(
+            onDismissRequest = { showNotificationPermissionDialog = false },
+            title = { Text(stringResource(R.string.dialog_notification_permission_title)) },
+            text = {
+                Text(stringResource(R.string.dialog_notification_permission_message))
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showNotificationPermissionDialog = false
+                        notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                ) {
+                    Text(stringResource(R.string.action_allow_notification))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showNotificationPermissionDialog = false
+                        viewModel.importFromAudiobookshelf()
+                    }
+                ) {
+                    Text(stringResource(R.string.action_continue_without))
                 }
             }
         )

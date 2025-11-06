@@ -47,6 +47,7 @@ class SettingsDataStore @Inject constructor(
         val POCKETBOOK_UPLOAD_METHOD = stringPreferencesKey("pocketbook_upload_method")
         val POCKETBOOK_CLEAN_TITLES = booleanPreferencesKey("pocketbook_clean_titles")
         val BOOK_SORT_ORDER = stringPreferencesKey("book_sort_order")
+        val LAST_AUDIOBOOKSHELF_SYNC_TIME = longPreferencesKey("last_audiobookshelf_sync_time")
     }
 
     val themeMode: Flow<ThemeMode> = context.dataStore.data.map { preferences ->
@@ -289,6 +290,16 @@ class SettingsDataStore @Inject constructor(
     suspend fun setBookSortOrder(sortOrder: com.readle.app.data.model.SortOrder) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.BOOK_SORT_ORDER] = sortOrder.name
+        }
+    }
+
+    val lastAudiobookshelfSyncTime: Flow<Long> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.LAST_AUDIOBOOKSHELF_SYNC_TIME] ?: 0L
+    }
+
+    suspend fun setLastAudiobookshelfSyncTime(time: Long) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.LAST_AUDIOBOOKSHELF_SYNC_TIME] = time
         }
     }
 }

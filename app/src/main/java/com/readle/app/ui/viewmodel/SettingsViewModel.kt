@@ -94,6 +94,11 @@ class SettingsViewModel @Inject constructor(
                     val updated = intent.getIntExtra(AudiobookshelfImportService.EXTRA_UPDATED, 0)
                     val total = intent.getIntExtra(AudiobookshelfImportService.EXTRA_TOTAL, 0)
                     _audiobookshelfImportState.value = AudiobookshelfImportState.Success(imported, updated, total)
+                    
+                    // Save the timestamp of successful sync
+                    viewModelScope.launch {
+                        settingsDataStore.setLastAudiobookshelfSyncTime(System.currentTimeMillis())
+                    }
                 }
                 AudiobookshelfImportService.ACTION_ERROR -> {
                     val message = intent.getStringExtra(AudiobookshelfImportService.EXTRA_ERROR_MESSAGE) ?: "Import failed"
@@ -227,6 +232,13 @@ class SettingsViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = false
+        )
+
+    val lastAudiobookshelfSyncTime: StateFlow<Long> =
+        settingsDataStore.lastAudiobookshelfSyncTime.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = 0L
         )
 
     private val _importExportState = MutableStateFlow<ImportExportState>(ImportExportState.Idle)
