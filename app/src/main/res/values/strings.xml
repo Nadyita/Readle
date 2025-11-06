@@ -51,7 +51,9 @@
     <string name="scanner_ml_kit">ML Kit</string>
     <string name="scanner_zxing">ZXing</string>
     <string name="format_json">JSON</string>
+    <string name="format_json_description">Recommended: Compact and typed</string>
     <string name="format_xml">XML</string>
+    <string name="format_xml_description">For manual editing (more readable)</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_scanner">Scanner</string>
     <string name="settings_section_apis">Book Search Services</string>
@@ -60,11 +62,12 @@
     <string name="api_isbndb_name">ISBNdb</string>
     <string name="api_isbndb_unavailable">Requires API token (currently unavailable)</string>
     <string name="settings_section_audiobookshelf">Audiobookshelf</string>
-    <string name="settings_audiobookshelf_description">Audiobookshelf is a self-hosted server for audiobooks and eBooks. Import your eBook collection and keep your reading status in sync.</string>
+    <string name="settings_audiobookshelf_description">Audiobookshelf is a self-hosted server for audiobooks and eBooks. Import your eBook collection and keep your read status in sync.</string>
     <string name="settings_section_pocketbook">PocketBook Cloud</string>
     <string name="settings_pocketbook_title">PocketBook</string>
     <string name="settings_section_data">Data Management</string>
-    <string name="action_sync_reading_progress">Sync Reading Progress</string>
+    <string name="settings_import_export_description">Export your entire library as a backup or import an existing collection. Perfect for transferring to a new device or creating backups.</string>
+    <string name="action_sync_reading_progress">Import Read Status</string>
     <string name="msg_syncing_pocketbook">Syncing with PocketBook Cloud…</string>
     <string name="error_pocketbook_timeout">PocketBook Cloud is not responding. Please try again later.</string>
 
@@ -165,9 +168,9 @@
     <string name="abs_import_in_progress">Importing eBooks from Audiobookshelf…</string>
     <string name="abs_last_sync">Last successful import: %s</string>
     <string name="abs_last_sync_label">Last import:</string>
-    <string name="abs_never_synced">never</string>
-    <string name="abs_sync_today">today, %s</string>
-    <string name="abs_sync_yesterday">yesterday</string>
+    <string name="abs_never_synced">Never</string>
+    <string name="abs_sync_today">Today, %s</string>
+    <string name="abs_sync_yesterday">Yesterday</string>
     <string name="abs_sync_days_ago">%d days ago</string>
     <string name="abs_http_warning_title">⚠️ HTTP (not HTTPS)</string>
     <string name="abs_http_warning_description">Android blocks unencrypted HTTP connections. Use HTTPS or enable Cleartext-Traffic in the app settings.</string>
@@ -187,8 +190,8 @@
     <string name="pocketbook_email_hint">your.email@example.com</string>
     <string name="pocketbook_password">Password</string>
     <string name="pocketbook_password_hint">Your password</string>
-    <string name="pocketbook_cloud_sync_description">Fetch your reading status from PocketBook Cloud. Readle automatically updates which books you have read on your PocketBook.</string>
-    <string name="pocketbook_cloud_sync_title">Sync Reading Status</string>
+    <string name="pocketbook_cloud_sync_description">Fetch your read status from PocketBook Cloud. Readle automatically updates which books you have read on your PocketBook.</string>
+    <string name="pocketbook_cloud_sync_title">Import Read Status</string>
     <string name="pocketbook_email_upload_title">Upload Books via Email</string>
     <string name="pocketbook_email_upload_description">Configure SMTP to send books to your PocketBook via email.</string>
     <string name="pocketbook_clean_titles_title">Clean Titles</string>

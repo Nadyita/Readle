@@ -662,10 +662,22 @@ fun SettingsScreen(
 
                             Button(
                                 onClick = {
-                                    // Show explanation dialog before requesting notification permission
+                                    // Check notification permission status first
                                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                                        showNotificationPermissionDialog = true
+                                        val hasPermission = androidx.core.content.ContextCompat.checkSelfPermission(
+                                            context,
+                                            android.Manifest.permission.POST_NOTIFICATIONS
+                                        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                                        
+                                        if (hasPermission) {
+                                            // Already has permission, start import directly
+                                            viewModel.importFromAudiobookshelf()
+                                        } else {
+                                            // Show explanation dialog before requesting permission
+                                            showNotificationPermissionDialog = true
+                                        }
                                     } else {
+                                        // Android < 13 doesn't need notification permission
                                         viewModel.importFromAudiobookshelf()
                                     }
                                 },
@@ -894,6 +906,12 @@ fun SettingsScreen(
             Text(
                 text = stringResource(R.string.label_import_export),
                 style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.settings_import_export_description),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -1424,12 +1442,23 @@ fun SettingsScreen(
                                 }
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = when (format) {
-                                    ExportFormat.JSON -> stringResource(R.string.format_json)
-                                    ExportFormat.XML -> stringResource(R.string.format_xml)
-                                }
-                            )
+                            Column {
+                                Text(
+                                    text = when (format) {
+                                        ExportFormat.JSON -> stringResource(R.string.format_json)
+                                        ExportFormat.XML -> stringResource(R.string.format_xml)
+                                    },
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Text(
+                                    text = when (format) {
+                                        ExportFormat.JSON -> stringResource(R.string.format_json_description)
+                                        ExportFormat.XML -> stringResource(R.string.format_xml_description)
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
