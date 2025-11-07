@@ -1,6 +1,7 @@
 package com.readle.app.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
@@ -413,31 +415,64 @@ fun EditBookScreen(
                     // Only show rating for books that have been read
                     if (isRead) {
                         Text(stringResource(R.string.label_rating_label), style = MaterialTheme.typography.titleMedium)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
+                        Box(
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            (1..5).forEach { star ->
+                            // Star rating buttons - centered
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .align(androidx.compose.ui.Alignment.Center),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                            ) {
+                                (1..5).forEach { star ->
+                                    IconButton(
+                                        onClick = { 
+                                            rating = star
+                                            // Auto-save rating in view mode
+                                            if (!isEditMode) {
+                                                viewModel.updateRating(bookId, star)
+                                                // Show snackbar notification
+                                                coroutineScope.launch {
+                                                    snackbarHostState.showSnackbar(
+                                                        context.getString(R.string.msg_rating_updated, star)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Star,
+                                            contentDescription = stringResource(R.string.label_stars, star),
+                                            tint = if (star <= rating) MaterialTheme.colorScheme.primary
+                                            else MaterialTheme.colorScheme.outline
+                                        )
+                                    }
+                                }
+                            }
+                            
+                            // Clear rating button - fixed on the left (only show if rating > 0)
+                            if (rating > 0) {
                                 IconButton(
-                                    onClick = { 
-                                        rating = star
-                                        // Auto-save rating in view mode
+                                    onClick = {
+                                        rating = 0
+                                        // Auto-save rating removal in view mode
                                         if (!isEditMode) {
-                                            viewModel.updateRating(bookId, star)
-                                            // Show snackbar notification
+                                            viewModel.updateRating(bookId, 0)
                                             coroutineScope.launch {
                                                 snackbarHostState.showSnackbar(
-                                                    context.getString(R.string.msg_rating_updated, star)
+                                                    context.getString(R.string.msg_rating_cleared)
                                                 )
                                             }
                                         }
-                                    }
+                                    },
+                                    modifier = Modifier.align(androidx.compose.ui.Alignment.CenterStart)
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Star,
-                                        contentDescription = stringResource(R.string.label_stars, star),
-                                        tint = if (star <= rating) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.outline
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = stringResource(R.string.action_clear_rating),
+                                        tint = MaterialTheme.colorScheme.error
                                     )
                                 }
                             }

@@ -121,6 +121,8 @@
     <string name="label_category">Category</string>
     <string name="label_rating_label">Rating</string>
     <string name="msg_rating_updated">%d stars given</string>
+    <string name="msg_rating_cleared">Rating cleared</string>
+    <string name="action_clear_rating">Clear rating</string>
     <string name="label_rating_optional">Rating (optional):</string>
     <string name="label_current_status">Current Status:</string>
     <string name="label_book_status">Book Status:</string>

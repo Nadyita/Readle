@@ -121,6 +121,8 @@
     <string name="label_category">Kategorie</string>
     <string name="label_rating_label">Bewertung</string>
     <string name="msg_rating_updated">%d Sterne vergeben</string>
+    <string name="msg_rating_cleared">Bewertung entfernt</string>
+    <string name="action_clear_rating">Bewertung löschen</string>
     <string name="label_rating_optional">Bewertung (optional):</string>
     <string name="label_current_status">Aktueller Status:</string>
     <string name="label_book_status">Buchstatus:</string>
