@@ -4,7 +4,6 @@ import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.readle.app.data.model.BookEntity
-import com.readle.app.data.model.ReadingCategory
 import com.readle.app.data.repository.BookRepository
 import com.readle.app.util.ImageManager
 import dagger.hilt.android.qualifiers.ApplicationContext

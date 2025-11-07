@@ -2,7 +2,6 @@ package com.readle.app.data.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.readle.app.data.model.BookEntity
@@ -12,7 +11,6 @@ import com.readle.app.data.model.BookEntity
     version = 11,
     exportSchema = true
 )
-@TypeConverters(Converters::class)
 abstract class ReadleDatabase : RoomDatabase() {
     abstract fun bookDao(): BookDao
 

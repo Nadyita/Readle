@@ -62,7 +62,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.readle.app.R
 import com.readle.app.data.api.model.BookSearchResult
-import com.readle.app.data.model.ReadingCategory
 import com.readle.app.ui.viewmodel.AddBookUiState
 import com.readle.app.ui.viewmodel.AddBookViewModel
 

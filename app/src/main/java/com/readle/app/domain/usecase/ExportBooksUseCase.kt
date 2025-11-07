@@ -2,7 +2,6 @@ package com.readle.app.domain.usecase
 
 import android.content.Context
 import com.readle.app.data.model.BookEntity
-import com.readle.app.data.model.ReadingCategory
 import com.readle.app.data.preferences.ExportFormat
 import com.readle.app.util.ImageManager
 import dagger.hilt.android.qualifiers.ApplicationContext

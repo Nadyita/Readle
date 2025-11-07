@@ -1,7 +1,6 @@
 package com.readle.app.data.api.audiobookshelf
 
 import com.readle.app.data.model.BookEntity
-import com.readle.app.data.model.ReadingCategory
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope

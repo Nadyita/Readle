@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.readle.app.data.model.BookEntity
-import com.readle.app.data.model.ReadingCategory
 import com.readle.app.data.preferences.SettingsDataStore
 import com.readle.app.data.repository.BookRepository
 import com.readle.app.domain.usecase.UploadToPocketbookUseCase

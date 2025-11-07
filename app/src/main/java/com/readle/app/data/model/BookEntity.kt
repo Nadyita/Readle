@@ -33,11 +33,3 @@ data class BookEntity(
     val titleSort: String = "" // Normalized title for sorting (articles and special chars removed)
 )
 
-// Kept for backwards compatibility during migration
-@Deprecated("Use isOwned and isRead flags instead")
-enum class ReadingCategory {
-    WANT,   // isOwned=false, isRead=false
-    OWN,    // isOwned=true,  isRead=false
-    READ    // isOwned=true,  isRead=true
-}
-

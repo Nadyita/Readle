@@ -57,7 +57,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.readle.app.R
 import com.readle.app.data.model.BookEntity
-import com.readle.app.data.model.ReadingCategory
 import com.readle.app.ui.util.htmlToAnnotatedString
 import com.readle.app.ui.viewmodel.EditBookUiState
 import com.readle.app.ui.viewmodel.EditBookViewModel

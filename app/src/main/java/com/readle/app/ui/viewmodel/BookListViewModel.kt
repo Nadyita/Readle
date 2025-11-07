@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.readle.app.data.api.audiobookshelf.AudiobookshelfApiClient
 import com.readle.app.data.model.BookEntity
-import com.readle.app.data.model.ReadingCategory
 import com.readle.app.data.preferences.SettingsDataStore
 import com.readle.app.data.repository.BookRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -458,29 +457,6 @@ class BookListViewModel @Inject constructor(
     
     fun clearLastSwipeAction() {
         _lastSwipeAction.value = null
-    }
-
-    @Deprecated("Use toggleBookOwned/toggleBookRead instead")
-    fun updateBookCategory(bookId: Long, newCategory: ReadingCategory) {
-        viewModelScope.launch {
-            val book = bookRepository.getBookById(bookId)
-            if (book != null) {
-                val updatedBook = book.copy(
-                    isOwned = newCategory != ReadingCategory.WANT,
-                    isRead = newCategory == ReadingCategory.READ,
-                    dateStarted = if (newCategory == ReadingCategory.OWN &&
-                        book.dateStarted == null) System.currentTimeMillis() else book.dateStarted,
-                    dateFinished = if (newCategory == ReadingCategory.READ &&
-                        book.dateFinished == null) System.currentTimeMillis() else book.dateFinished
-                )
-                bookRepository.updateBook(updatedBook)
-                
-                // Sync with Audiobookshelf if book is linked
-                if (book.audiobookshelfId != null) {
-                    syncReadStatusWithAudiobookshelf(book.audiobookshelfId, newCategory == ReadingCategory.READ)
-                }
-            }
-        }
     }
     
     private suspend fun syncReadStatusWithAudiobookshelf(libraryItemId: String, isRead: Boolean) {

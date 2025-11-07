@@ -2,7 +2,6 @@ package com.readle.app.domain.usecase
 
 import com.readle.app.data.api.pocketbook.PocketbookBook
 import com.readle.app.data.api.pocketbook.PocketbookCloudApiClient
-import com.readle.app.data.model.ReadingCategory
 import com.readle.app.data.repository.BookRepository
 import com.readle.app.data.preferences.SettingsDataStore
 import com.readle.app.util.TextNormalizer

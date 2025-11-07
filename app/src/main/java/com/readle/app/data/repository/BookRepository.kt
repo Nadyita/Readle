@@ -2,7 +2,6 @@ package com.readle.app.data.repository
 
 import com.readle.app.data.database.BookDao
 import com.readle.app.data.model.BookEntity
-import com.readle.app.data.model.ReadingCategory
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -19,10 +18,6 @@ class BookRepository @Inject constructor(
     fun getBooksFiltered(isOwned: Boolean?, isRead: Boolean?): Flow<List<BookEntity>> =
         bookDao.getBooksFiltered(isOwned, isRead)
 
-    @Deprecated("Use getBooksFiltered instead")
-    fun getBooksByCategory(category: ReadingCategory): Flow<List<BookEntity>> =
-        bookDao.getBooksByCategory(category)
-
     suspend fun getBookById(id: Long): BookEntity? = bookDao.getBookById(id)
 
     fun searchBooks(query: String): Flow<List<BookEntity>> = bookDao.searchBooks(query)
@@ -38,10 +33,6 @@ class BookRepository @Inject constructor(
     suspend fun deleteBooks(bookIds: List<Long>) = bookDao.deleteBooks(bookIds)
 
     suspend fun deleteAllBooks() = bookDao.deleteAllBooks()
-
-    @Deprecated("Use count queries with isOwned/isRead instead")
-    fun getBookCountByCategory(category: ReadingCategory): Flow<Int> =
-        bookDao.getBookCountByCategory(category)
 
     suspend fun getTotalBookCount(): Int = bookDao.getTotalBookCount()
     

@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.readle.app.data.api.model.BookSearchResult
 import com.readle.app.data.model.BookEntity
-import com.readle.app.data.model.ReadingCategory
 import com.readle.app.data.repository.BookRepository
 import com.readle.app.data.repository.BookSearchRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
