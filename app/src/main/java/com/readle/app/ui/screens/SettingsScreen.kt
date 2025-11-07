@@ -64,6 +64,7 @@ import com.readle.app.R
 import com.readle.app.data.preferences.ExportFormat
 import com.readle.app.data.preferences.ScannerLibrary
 import com.readle.app.data.preferences.ThemeMode
+import com.readle.app.ui.util.RelativeTimeFormatter
 import com.readle.app.ui.viewmodel.ImportExportState
 import com.readle.app.ui.viewmodel.SettingsViewModel
 import java.io.File
@@ -609,47 +610,7 @@ fun SettingsScreen(
 
                             // Display last sync time if available
                             val lastSyncText = if (lastAudiobookshelfSyncTime > 0) {
-                                val now = System.currentTimeMillis()
-                                val diffMillis = now - lastAudiobookshelfSyncTime
-                                val diffDays = diffMillis / (1000 * 60 * 60 * 24)
-                                
-                                when {
-                                    diffDays < 1 -> {
-                                        // Today: show "heute, HH:mm" / "today, HH:mm"
-                                        val timeFormat = java.text.SimpleDateFormat(
-                                            "HH:mm",
-                                            java.util.Locale.getDefault()
-                                        )
-                                        stringResource(
-                                            R.string.abs_sync_today,
-                                            timeFormat.format(java.util.Date(lastAudiobookshelfSyncTime))
-                                        )
-                                    }
-                                    diffDays == 1L -> {
-                                        // Yesterday
-                                        stringResource(R.string.abs_sync_yesterday)
-                                    }
-                                    diffDays < 7 -> {
-                                        // Within a week: show "vor X Tagen" / "X days ago"
-                                        stringResource(R.string.abs_sync_days_ago, diffDays.toInt())
-                                    }
-                                    diffDays < 365 -> {
-                                        // This year: show "16. März" / "March 16"
-                                        val dateFormat = java.text.SimpleDateFormat(
-                                            "d. MMMM",
-                                            java.util.Locale.getDefault()
-                                        )
-                                        dateFormat.format(java.util.Date(lastAudiobookshelfSyncTime))
-                                    }
-                                    else -> {
-                                        // Older: show "16. März 2025" / "March 16, 2025"
-                                        val dateFormat = java.text.SimpleDateFormat(
-                                            "d. MMMM yyyy",
-                                            java.util.Locale.getDefault()
-                                        )
-                                        dateFormat.format(java.util.Date(lastAudiobookshelfSyncTime))
-                                    }
-                                }
+                                RelativeTimeFormatter.format(lastAudiobookshelfSyncTime, context = context)
                             } else {
                                 stringResource(R.string.abs_never_synced)
                             }
