@@ -387,11 +387,21 @@ class AudiobookshelfApiClient @Inject constructor() {
         // Check if series is actually the author name (Audiobookshelf bug)
         // This happens when Audiobookshelf has no series but sets the author name in seriesName
         if (series != null) {
-            val isAuthorName = series.equals(metadata.authorName, ignoreCase = true) ||
-                               series.equals(metadata.authorNameLF, ignoreCase = true) ||
-                               series.equals(author, ignoreCase = true) ||  // Also check normalized author
-                               series.equals(originalAuthor, ignoreCase = true) ||  // And original author
-                               metadata.authors?.any { it.name.equals(series, ignoreCase = true) } == true
+            // Normalize for comparison (remove dots, underscores, spaces for fuzzy matching)
+            val normalizedSeries = series.replace(".", "").replace("_", "").replace(" ", "").lowercase()
+            val normalizedAuthorName = metadata.authorName?.replace(".", "")?.replace("_", "")?.replace(" ", "")?.lowercase() ?: ""
+            val normalizedAuthorNameLF = metadata.authorNameLF?.replace(".", "")?.replace("_", "")?.replace(" ", "")?.lowercase() ?: ""
+            val normalizedAuthor = author.replace(".", "").replace("_", "").replace(" ", "").lowercase()
+            val normalizedOriginalAuthor = originalAuthor.replace(".", "").replace("_", "").replace(" ", "").lowercase()
+            
+            val isAuthorName = normalizedSeries == normalizedAuthorName ||
+                               normalizedSeries == normalizedAuthorNameLF ||
+                               normalizedSeries == normalizedAuthor ||
+                               normalizedSeries == normalizedOriginalAuthor ||
+                               metadata.authors?.any { 
+                                   val normalizedAuthorListName = it.name.replace(".", "").replace("_", "").replace(" ", "").lowercase()
+                                   normalizedSeries == normalizedAuthorListName
+                               } == true
             if (isAuthorName) {
                 series = null
             }
