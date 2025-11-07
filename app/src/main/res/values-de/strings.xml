@@ -19,6 +19,7 @@
     <string name="action_save">Speichern</string>
     <string name="action_cancel">Abbrechen</string>
     <string name="action_upload_to_pocketbook">Zu PocketBook hochladen</string>
+    <string name="action_reupload_to_pocketbook">Erneut zu PocketBook hochladen</string>
     <string name="action_import">Importieren</string>
     <string name="action_export">Exportieren</string>
     <string name="action_share_export">Export teilen</string>

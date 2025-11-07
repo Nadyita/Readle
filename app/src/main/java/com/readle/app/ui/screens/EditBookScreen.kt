@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -35,6 +36,7 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -76,6 +78,7 @@ fun EditBookScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var isEditMode by remember { mutableStateOf(false) }
+    var showReuploadDialog by remember { mutableStateOf(false) }
     var title by remember { mutableStateOf("") }
     var author by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -506,7 +509,14 @@ fun EditBookScreen(
                         val currentBook = (uiState as? EditBookUiState.BookLoaded)?.book
                         if (currentBook?.isEBook == true && isEmailConfigured) {
                             Button(
-                                onClick = { viewModel.uploadBookToPocketbook(bookId) },
+                                onClick = { 
+                                    // Check if book was already uploaded
+                                    if (currentBook.uploadedViaEmail) {
+                                        showReuploadDialog = true
+                                    } else {
+                                        viewModel.uploadBookToPocketbook(bookId)
+                                    }
+                                },
                                 modifier = Modifier.fillMaxWidth(),
                                 enabled = uploadState !is EditBookUploadState.Uploading
                             ) {
@@ -517,12 +527,43 @@ fun EditBookScreen(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                 }
-                                Text(stringResource(R.string.action_upload_to_pocketbook))
+                                Text(
+                                    stringResource(
+                                        if (currentBook.uploadedViaEmail) 
+                                            R.string.action_reupload_to_pocketbook 
+                                        else 
+                                            R.string.action_upload_to_pocketbook
+                                    )
+                                )
                             }
                         }
                     }
                 }
             }
+        }
+        
+        // Reupload confirmation dialog
+        if (showReuploadDialog) {
+            AlertDialog(
+                onDismissRequest = { showReuploadDialog = false },
+                title = { Text(stringResource(R.string.dialog_reupload_title)) },
+                text = { Text(stringResource(R.string.dialog_reupload_single)) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showReuploadDialog = false
+                            viewModel.uploadBookToPocketbook(bookId, forceReupload = true)
+                        }
+                    ) {
+                        Text(stringResource(R.string.action_resend))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showReuploadDialog = false }) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                }
+            )
         }
     }
 }

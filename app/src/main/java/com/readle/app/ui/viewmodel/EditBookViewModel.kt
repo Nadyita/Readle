@@ -154,7 +154,7 @@ class EditBookViewModel @Inject constructor(
         _uiState.value = EditBookUiState.Idle
     }
 
-    fun uploadBookToPocketbook(bookId: Long) {
+    fun uploadBookToPocketbook(bookId: Long, forceReupload: Boolean = false) {
         viewModelScope.launch {
             _uploadState.value = EditBookUploadState.Uploading
             try {
@@ -162,7 +162,7 @@ class EditBookViewModel @Inject constructor(
                 if (book != null) {
                     val result = uploadToPocketbookUseCase.execute(
                         books = listOf(book),
-                        forceReupload = false
+                        forceReupload = forceReupload
                     )
                     result.fold(
                         onSuccess = { uploadResult ->

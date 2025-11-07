@@ -19,6 +19,7 @@
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_upload_to_pocketbook">Upload to PocketBook</string>
+    <string name="action_reupload_to_pocketbook">Re-upload to PocketBook</string>
     <string name="action_import">Import</string>
     <string name="action_export">Export</string>
     <string name="action_share_export">Share Export</string>
