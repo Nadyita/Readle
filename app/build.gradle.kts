@@ -14,8 +14,8 @@ android {
         applicationId = "com.readle.app"
         minSdk = 31
         targetSdk = 34
-        versionCode = 21
-        versionName = "0.1.23"
+        versionCode = 22
+        versionName = "0.1.24"
 
         testInstrumentationRunner = "com.readle.app.HiltTestRunner"
         vectorDrawables {
