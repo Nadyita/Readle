@@ -395,7 +395,21 @@ fun SettingsScreen(
                 }
             }
 
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Scanner Settings Section
+            Text(
+                text = stringResource(R.string.settings_scanner),
+                style = MaterialTheme.typography.titleMedium
+            )
             Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = stringResource(R.string.settings_scanner_description),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
