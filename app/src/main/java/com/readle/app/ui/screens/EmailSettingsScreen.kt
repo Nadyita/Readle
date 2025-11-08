@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -33,11 +34,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.readle.app.R
 import com.readle.app.ui.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,12 +94,12 @@ fun EmailSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("E-Mail Einstellungen (PBSync)") },
+                title = { Text(stringResource(R.string.pocketbook_email_settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Zurück"
+                            contentDescription = stringResource(R.string.action_back)
                         )
                     }
                 }
@@ -108,11 +111,12 @@ fun EmailSettingsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
+                .imePadding()
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "SMTP Server Einstellungen",
+                text = stringResource(R.string.email_settings_smtp_section),
                 style = MaterialTheme.typography.titleMedium
             )
 
@@ -129,8 +133,8 @@ fun EmailSettingsScreen(
                     OutlinedTextField(
                         value = smtpServerInput,
                         onValueChange = { smtpServerInput = it },
-                        label = { Text("SMTP Server") },
-                        placeholder = { Text("smtp.gmail.com") },
+                        label = { Text(stringResource(R.string.pocketbook_smtp_server)) },
+                        placeholder = { Text(stringResource(R.string.pocketbook_smtp_server_hint)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -138,7 +142,7 @@ fun EmailSettingsScreen(
                     OutlinedTextField(
                         value = smtpPortInput,
                         onValueChange = { smtpPortInput = it },
-                        label = { Text("SMTP Port") },
+                        label = { Text(stringResource(R.string.pocketbook_smtp_port)) },
                         placeholder = { Text("465") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
@@ -148,8 +152,8 @@ fun EmailSettingsScreen(
                     OutlinedTextField(
                         value = smtpUsernameInput,
                         onValueChange = { smtpUsernameInput = it },
-                        label = { Text("Benutzername") },
-                        placeholder = { Text("your.email@gmail.com") },
+                        label = { Text(stringResource(R.string.pocketbook_username)) },
+                        placeholder = { Text(stringResource(R.string.pocketbook_username_hint)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
@@ -161,8 +165,8 @@ fun EmailSettingsScreen(
                     OutlinedTextField(
                         value = smtpPasswordInput,
                         onValueChange = { smtpPasswordInput = it },
-                        label = { Text("Passwort") },
-                        placeholder = { Text("App-Passwort") },
+                        label = { Text(stringResource(R.string.pocketbook_password)) },
+                        placeholder = { Text(stringResource(R.string.pocketbook_password_hint)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation()
@@ -171,8 +175,8 @@ fun EmailSettingsScreen(
                     OutlinedTextField(
                         value = smtpFromEmailInput,
                         onValueChange = { smtpFromEmailInput = it },
-                        label = { Text("Absender E-Mail") },
-                        placeholder = { Text("your.email@gmail.com") },
+                        label = { Text(stringResource(R.string.pocketbook_sender_email)) },
+                        placeholder = { Text(stringResource(R.string.pocketbook_from_email_hint)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
@@ -181,8 +185,8 @@ fun EmailSettingsScreen(
                     OutlinedTextField(
                         value = pocketbookSendToEmailInput,
                         onValueChange = { pocketbookSendToEmailInput = it },
-                        label = { Text("Pocketbook E-Mail") },
-                        placeholder = { Text("username@pbsync.com") },
+                        label = { Text(stringResource(R.string.pocketbook_pocketbook_email)) },
+                        placeholder = { Text(stringResource(R.string.pocketbook_pocketbook_email_hint)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
@@ -205,7 +209,7 @@ fun EmailSettingsScreen(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Einstellungen speichern")
+                    Text(stringResource(R.string.action_save_settings))
                 }
             }
 
@@ -222,7 +226,7 @@ fun EmailSettingsScreen(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Text("Verbindung testen")
+                        Text(stringResource(R.string.action_test_connection))
                     }
                 }
             }
@@ -237,7 +241,7 @@ fun EmailSettingsScreen(
                         )
                     ) {
                         Text(
-                            text = "✓ Verbindung erfolgreich!",
+                            text = stringResource(R.string.email_test_success),
                             modifier = Modifier.padding(16.dp),
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
@@ -252,7 +256,7 @@ fun EmailSettingsScreen(
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = "✗ Verbindung fehlgeschlagen",
+                                text = stringResource(R.string.email_test_failed),
                                 color = MaterialTheme.colorScheme.onErrorContainer,
                                 style = MaterialTheme.typography.titleSmall
                             )
@@ -278,15 +282,13 @@ fun EmailSettingsScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Hinweise:",
+                        text = stringResource(R.string.email_settings_hints_title),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "• Standard-Port: 465 (SSL/TLS) oder 587 (STARTTLS)\n" +
-                                "• Gmail: Verwenden Sie ein App-Passwort\n" +
-                                "• Pocketbook E-Mail: Finden Sie diese in Ihrem Pocketbook-Account",
+                        text = stringResource(R.string.email_settings_hints_text),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )

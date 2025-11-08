@@ -843,13 +843,46 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     
-                    // Email Settings Button
-                    Button(
-                        onClick = { onNavigateToEmailSettings() },
-                        modifier = Modifier.fillMaxWidth()
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    // Email Settings Card
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        )
                     ) {
-                        Text(stringResource(R.string.pocketbook_configure_email_button))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onNavigateToEmailSettings() }
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.pocketbook_email_account),
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Text(
+                                    text = if (smtpFromEmail.isNotBlank()) {
+                                        smtpFromEmail
+                                    } else {
+                                        stringResource(R.string.pocketbook_email_not_configured)
+                                    },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (smtpFromEmail.isNotBlank()) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    }
+                                )
+                            }
+                        }
                     }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
                     
                     // Title Cleaning Toggle
                     Row(

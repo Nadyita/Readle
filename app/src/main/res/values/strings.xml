@@ -202,6 +202,8 @@
     <string name="pocketbook_clean_titles_title">Clean Titles</string>
     <string name="pocketbook_clean_titles_description">Removes series name and number (e.g. \'Harry Potter 3\') from book titles during upload</string>
     <string name="pocketbook_configure_email_button">Configure Email Settings →</string>
+    <string name="pocketbook_email_account">Email Account</string>
+    <string name="pocketbook_email_not_configured">&lt;empty&gt;</string>
     <string name="action_save_credentials">Save Credentials</string>
     <string name="action_save_server_url">Save Server URL</string>
     <string name="pocketbook_email_settings_title">Email Settings (PBSync)</string>
@@ -211,9 +213,17 @@
     <string name="pocketbook_username">Username</string>
     <string name="pocketbook_username_hint">your.email@gmail.com</string>
     <string name="pocketbook_sender_email">Sender Email</string>
+    <string name="pocketbook_from_email_hint">your.email@gmail.com</string>
     <string name="pocketbook_pocketbook_email">Pocketbook Email</string>
     <string name="pocketbook_pocketbook_email_hint">username@pbsync.com</string>
     <string name="action_test_connection">Test Connection</string>
+    <string name="action_save_settings">Save Settings</string>
+    <string name="email_test_success">✓ Connection Successful!</string>
+    <string name="email_test_failed">✗ Connection Failed</string>
+    <string name="email_settings_hints_title">Notes:</string>
+    <string name="email_settings_hints_text">• Standard ports: 465 (SSL/TLS) or 587 (STARTTLS)\n• Gmail: Use an app password\n• Pocketbook Email: Find this in your Pocketbook account</string>
+    <string name="email_settings_smtp_section">SMTP Server Settings</string>
+    <string name="action_back">Back</string>
     <string name="pocketbook_upload_method_cloud">Cloud API (Disabled)</string>
     <string name="pocketbook_upload_method_email">Email (SMTP)</string>
     <string name="pocketbook_configure_email">Configure Email Settings →</string>
