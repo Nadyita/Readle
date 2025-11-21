@@ -447,7 +447,8 @@ class AudiobookshelfApiClient @Inject constructor() {
 
         // Determine isOwned and isRead flags
         // Rule: Never downgrade isRead (user decision takes precedence)
-        val isOwned = true // Always owned if in Audiobookshelf
+        // isOwned = Paper book ownership (separate from eBook)
+        val isOwned = existingBook?.isOwned ?: false // Keep existing paper book status, default to false for eBooks
         val isRead = if (existingBook != null && existingBook.isRead) {
             // Keep READ status - never downgrade even if ABS says not finished
             true

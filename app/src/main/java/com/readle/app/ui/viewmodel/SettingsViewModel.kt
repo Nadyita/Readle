@@ -241,6 +241,13 @@ class SettingsViewModel @Inject constructor(
             initialValue = 0L
         )
 
+    val filterChipsAlwaysEditable: StateFlow<Boolean> =
+        settingsDataStore.filterChipsAlwaysEditable.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
+
     private val _importExportState = MutableStateFlow<ImportExportState>(ImportExportState.Idle)
     val importExportState: StateFlow<ImportExportState> = _importExportState.asStateFlow()
 
@@ -342,6 +349,12 @@ class SettingsViewModel @Inject constructor(
     fun logoutFromAudiobookshelf() {
         viewModelScope.launch {
             settingsDataStore.setAudiobookshelfApiToken("")
+        }
+    }
+
+    fun setFilterChipsAlwaysEditable(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsDataStore.setFilterChipsAlwaysEditable(enabled)
         }
     }
 
@@ -666,7 +679,7 @@ class SettingsViewModel @Inject constructor(
                         isEBook = true,
                         comments = null,
                         rating = 0,
-                        isOwned = true,
+                        isOwned = false, // eBook from Pocketbook, not a paper book
                         isRead = true,
                         dateAdded = System.currentTimeMillis(),
                         dateStarted = null,

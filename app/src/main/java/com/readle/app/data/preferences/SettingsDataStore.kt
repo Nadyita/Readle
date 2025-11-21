@@ -48,6 +48,7 @@ class SettingsDataStore @Inject constructor(
         val POCKETBOOK_CLEAN_TITLES = booleanPreferencesKey("pocketbook_clean_titles")
         val BOOK_SORT_ORDER = stringPreferencesKey("book_sort_order")
         val LAST_AUDIOBOOKSHELF_SYNC_TIME = longPreferencesKey("last_audiobookshelf_sync_time")
+        val FILTER_CHIPS_ALWAYS_EDITABLE = booleanPreferencesKey("filter_chips_always_editable")
     }
 
     val themeMode: Flow<ThemeMode> = context.dataStore.data.map { preferences ->
@@ -300,6 +301,16 @@ class SettingsDataStore @Inject constructor(
     suspend fun setLastAudiobookshelfSyncTime(time: Long) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.LAST_AUDIOBOOKSHELF_SYNC_TIME] = time
+        }
+    }
+
+    val filterChipsAlwaysEditable: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.FILTER_CHIPS_ALWAYS_EDITABLE] ?: false
+    }
+
+    suspend fun setFilterChipsAlwaysEditable(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.FILTER_CHIPS_ALWAYS_EDITABLE] = enabled
         }
     }
 }

@@ -16,10 +16,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -27,6 +31,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -52,6 +57,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -61,6 +67,7 @@ import com.readle.app.ui.util.htmlToAnnotatedString
 import com.readle.app.ui.viewmodel.EditBookUiState
 import com.readle.app.ui.viewmodel.EditBookViewModel
 import com.readle.app.ui.viewmodel.EditBookUploadState
+import com.readle.app.ui.viewmodel.SettingsViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,17 +76,20 @@ fun EditBookScreen(
     bookId: Long,
     onNavigateBack: () -> Unit,
     onFilterByText: (String) -> Unit = {},
-    viewModel: EditBookViewModel = hiltViewModel()
+    viewModel: EditBookViewModel = hiltViewModel(),
+    settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val uploadState by viewModel.uploadState.collectAsState()
     val isEmailConfigured by viewModel.isEmailConfigured.collectAsState()
+    val filterChipsAlwaysEditable by settingsViewModel.filterChipsAlwaysEditable.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
     var isEditMode by remember { mutableStateOf(false) }
     var showReuploadDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     var title by remember { mutableStateOf("") }
     var author by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -142,10 +152,53 @@ fun EditBookScreen(
                     }
                 },
                 actions = {
+                    // Upload button - only for eBooks from Audiobookshelf when email is configured
+                    val currentBook = (uiState as? EditBookUiState.BookLoaded)?.book
+                    if (currentBook?.isEBook == true && 
+                        currentBook.audiobookshelfId != null && 
+                        isEmailConfigured) {
+                        IconButton(
+                            onClick = { 
+                                // Check if book was already uploaded
+                                if (currentBook.uploadedViaEmail) {
+                                    showReuploadDialog = true
+                                } else {
+                                    viewModel.uploadBookToPocketbook(bookId)
+                                }
+                            },
+                            enabled = uploadState !is EditBookUploadState.Uploading
+                        ) {
+                            if (uploadState is EditBookUploadState.Uploading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Default.Upload, 
+                                    contentDescription = stringResource(
+                                        if (currentBook.uploadedViaEmail) 
+                                            R.string.action_reupload_to_pocketbook 
+                                        else 
+                                            R.string.action_upload_to_pocketbook
+                                    )
+                                )
+                            }
+                        }
+                    }
+                    
                     if (!isEditMode) {
                         IconButton(onClick = { isEditMode = true }) {
                             Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.cd_edit_book))
                         }
+                    }
+                    // Delete button - always visible
+                    IconButton(onClick = { showDeleteDialog = true }) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = stringResource(R.string.action_delete_book),
+                            tint = MaterialTheme.colorScheme.error
+                        )
                     }
                 }
             )
@@ -181,6 +234,10 @@ fun EditBookScreen(
                 }
             }
             else -> {
+                // Get the book from state to check audiobookshelfId
+                val book = (uiState as? EditBookUiState.BookLoaded)?.book
+                val isFromAudiobookshelf = book?.audiobookshelfId != null
+                
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -188,6 +245,111 @@ fun EditBookScreen(
                         .padding(16.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
+                    // Status FilterChips (eBook, Physical Book, Read)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        FilterChip(
+                            selected = isEBook,
+                            onClick = { 
+                                if (!isFromAudiobookshelf && (filterChipsAlwaysEditable || isEditMode)) {
+                                    isEBook = !isEBook
+                                    // Auto-save if not in edit mode
+                                    if (!isEditMode && filterChipsAlwaysEditable) {
+                                        viewModel.updateBookStatus(bookId, isEBook, isOwned, isRead)
+                                    }
+                                } else if (isFromAudiobookshelf) {
+                                    // Show snackbar: cannot edit because from Audiobookshelf
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            context.getString(R.string.msg_cannot_edit_ebook_audiobookshelf)
+                                        )
+                                    }
+                                } else {
+                                    // Show snackbar: not in edit mode
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            context.getString(R.string.msg_cannot_edit_not_in_edit_mode)
+                                        )
+                                    }
+                                }
+                            },
+                            label = { Text(stringResource(R.string.filter_ebook)) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.ereader_ebook),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = if (isEBook) MaterialTheme.colorScheme.primary 
+                                          else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                                )
+                            }
+                        )
+                        
+                        FilterChip(
+                            selected = isOwned,
+                            onClick = { 
+                                if (filterChipsAlwaysEditable || isEditMode) {
+                                    isOwned = !isOwned
+                                    // Auto-save if not in edit mode
+                                    if (!isEditMode && filterChipsAlwaysEditable) {
+                                        viewModel.updateBookStatus(bookId, isEBook, isOwned, isRead)
+                                    }
+                                } else {
+                                    // Show snackbar: not in edit mode
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            context.getString(R.string.msg_cannot_edit_not_in_edit_mode)
+                                        )
+                                    }
+                                }
+                            },
+                            label = { Text(stringResource(R.string.filter_owned_paper)) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.MenuBook,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = if (isOwned) MaterialTheme.colorScheme.primary 
+                                          else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                                )
+                            }
+                        )
+                        
+                        FilterChip(
+                            selected = isRead,
+                            onClick = { 
+                                if (filterChipsAlwaysEditable || isEditMode) {
+                                    isRead = !isRead
+                                    // Auto-save if not in edit mode
+                                    if (!isEditMode && filterChipsAlwaysEditable) {
+                                        viewModel.updateBookStatus(bookId, isEBook, isOwned, isRead)
+                                    }
+                                } else {
+                                    // Show snackbar: not in edit mode
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            context.getString(R.string.msg_cannot_edit_not_in_edit_mode)
+                                        )
+                                    }
+                                }
+                            },
+                            label = { Text(stringResource(R.string.filter_read)) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = if (isRead) MaterialTheme.colorScheme.primary 
+                                          else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                                )
+                            }
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
                     // Title field
                     if (isEditMode) {
                         OutlinedTextField(
@@ -300,48 +462,28 @@ fun EditBookScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                     }
 
-                    // Series Number and eBook
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Series Number - only show in edit mode or if series number is not blank
-                        if (isEditMode || seriesNumber.isNotBlank()) {
-                            if (isEditMode) {
-                                OutlinedTextField(
-                                    value = seriesNumber,
-                                    onValueChange = { seriesNumber = it },
-                                    label = { Text(stringResource(R.string.field_series_number)) },
-                                    modifier = Modifier.weight(1f)
-                                )
-                            } else {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = stringResource(R.string.field_series_number),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Text(
-                                        text = seriesNumber,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        modifier = Modifier.padding(vertical = 8.dp)
-                                    )
-                                }
-                            }
-                        }
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = if (isEditMode || seriesNumber.isNotBlank()) Modifier.weight(1f) else Modifier.fillMaxWidth()
-                        ) {
-                            androidx.compose.material3.Checkbox(
-                                checked = isEBook,
-                                onCheckedChange = if (isEditMode) { { isEBook = it } } else null,
-                                enabled = isEditMode
+                    // Series Number - only show in edit mode or if series number is not blank
+                    if (isEditMode || seriesNumber.isNotBlank()) {
+                        if (isEditMode) {
+                            OutlinedTextField(
+                                value = seriesNumber,
+                                onValueChange = { seriesNumber = it },
+                                label = { Text(stringResource(R.string.field_series_number)) },
+                                modifier = Modifier.fillMaxWidth()
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.field_is_ebook))
+                        } else {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    text = stringResource(R.string.field_series_number),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = seriesNumber,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+                            }
                         }
                     }
 
@@ -594,6 +736,34 @@ fun EditBookScreen(
                 },
                 dismissButton = {
                     TextButton(onClick = { showReuploadDialog = false }) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                }
+            )
+        }
+        
+        // Delete confirmation dialog
+        if (showDeleteDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteDialog = false },
+                title = { Text(stringResource(R.string.dialog_delete_title)) },
+                text = { Text(stringResource(R.string.dialog_delete_message)) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDeleteDialog = false
+                            viewModel.deleteBook(bookId)
+                            onNavigateBack()
+                        },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text(stringResource(R.string.action_delete))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteDialog = false }) {
                         Text(stringResource(R.string.action_cancel))
                     }
                 }

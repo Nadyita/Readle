@@ -98,8 +98,9 @@ class BookListViewModel @Inject constructor(
         val filteredByStatus = allBooks.filter { book ->
             val matchesOwned = when (ownedFilter) {
                 FilterState.ALL -> true
-                FilterState.YES -> book.isOwned
-                FilterState.NO -> !book.isOwned
+                // "Owned" means: owned as eBook OR owned as paper book
+                FilterState.YES -> book.isEBook || book.isOwned
+                FilterState.NO -> !book.isEBook && !book.isOwned
             }
             val matchesRead = when (readFilter) {
                 FilterState.ALL -> true
@@ -307,8 +308,6 @@ class BookListViewModel @Inject constructor(
                 )
                 bookRepository.updateBook(updatedBook)
             }
-            
-            // Keep selection active (removed: _selectedBooks.value = emptySet())
         }
     }
 

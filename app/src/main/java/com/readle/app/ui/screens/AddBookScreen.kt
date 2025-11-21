@@ -21,7 +21,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -29,6 +31,7 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -50,20 +53,26 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import android.widget.Toast
 import coil.compose.AsyncImage
 import com.readle.app.R
 import com.readle.app.data.api.model.BookSearchResult
 import com.readle.app.ui.viewmodel.AddBookUiState
 import com.readle.app.ui.viewmodel.AddBookViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,6 +92,18 @@ fun AddBookScreen(
     var selectedBook by remember { mutableStateOf<BookSearchResult?>(null) }
     var selectedBooks by remember { mutableStateOf<Set<BookSearchResult>>(emptySet()) }
     var isMultiSelectMode by remember { mutableStateOf(false) }
+    
+    val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    
+    // Show scroll-to-top FAB when scrolled down
+    val showScrollToTop by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex > 0
+        }
+    }
 
     // Process scanned ISBN
     LaunchedEffect(scannedIsbn) {
@@ -95,6 +116,9 @@ fun AddBookScreen(
 
     LaunchedEffect(uiState) {
         if (uiState is AddBookUiState.Success) {
+            // Show success message
+            val message = context.getString(R.string.msg_book_added_successfully)
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             // Reset state and stay on this screen
             viewModel.resetState()
         }
@@ -118,12 +142,44 @@ fun AddBookScreen(
             }
         }
     }
+    
+    // Show toast with search results count and hide keyboard
+    LaunchedEffect(uiState) {
+        when (uiState) {
+            is AddBookUiState.SearchResults -> {
+                val searchResults = uiState as AddBookUiState.SearchResults
+                val count = searchResults.results.size
+                val message = if (count == 0) {
+                    context.getString(R.string.msg_no_results)
+                } else {
+                    "$count ${if (count == 1) context.getString(R.string.book_singular) else context.getString(R.string.book_plural)}"
+                }
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                focusManager.clearFocus()
+            }
+            is AddBookUiState.Error -> {
+                focusManager.clearFocus()
+            }
+            else -> {}
+        }
+    }
 
     Scaffold(
         contentWindowInsets = WindowInsets.ime.union(WindowInsets.navigationBars),
         floatingActionButton = {
-            if (isMultiSelectMode && selectedBooks.isNotEmpty()) {
-                androidx.compose.material3.FloatingActionButton(
+            // Show "Scroll to search" FAB if scrolled down and not in multi-select mode
+            if (showScrollToTop && !isMultiSelectMode) {
+                FloatingActionButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            listState.animateScrollToItem(0)
+                        }
+                    }
+                ) {
+                    Icon(Icons.Default.KeyboardArrowUp, contentDescription = stringResource(R.string.action_scroll_to_search))
+                }
+            } else if (isMultiSelectMode && selectedBooks.isNotEmpty()) {
+                FloatingActionButton(
                     onClick = {
                         showCategoryDialog = true
                     }
@@ -180,145 +236,160 @@ fun AddBookScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // ISBN input with scan button
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = isbn,
-                    onValueChange = { isbn = it },
-                    label = { Text("ISBN") },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true
-                )
-                IconButton(
-                    onClick = onNavigateToScanner,
-                    modifier = Modifier.size(56.dp)
-                ) {
-                    Icon(
-                        Icons.Default.CameraAlt,
-                        contentDescription = stringResource(R.string.action_scan_isbn),
-                        modifier = Modifier.size(32.dp)
+            // Search fields section
+            item {
+                Column {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // ISBN input with scan button
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = isbn,
+                            onValueChange = { isbn = it },
+                            label = { Text("ISBN") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                        IconButton(
+                            onClick = onNavigateToScanner,
+                            modifier = Modifier.size(56.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.CameraAlt,
+                                contentDescription = stringResource(R.string.action_scan_isbn),
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                    }
+                    
+                    // Search by ISBN button
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { viewModel.searchByIsbn(isbn) },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = isbn.isNotBlank()
+                    ) {
+                        Icon(Icons.Default.Search, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.action_search) + " ISBN")
+                    }
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    // Title input
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        label = { Text(stringResource(R.string.field_title)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
                     )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Author input
+                    OutlinedTextField(
+                        value = author,
+                        onValueChange = { author = it },
+                        label = { Text(stringResource(R.string.field_author)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Series input
+                    OutlinedTextField(
+                        value = series,
+                        onValueChange = { series = it },
+                        label = { Text(stringResource(R.string.field_series)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    
+                    // Search by title/author/series button
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { viewModel.searchByTitleAuthor(title, author, series) },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = title.isNotBlank() || author.isNotBlank() || series.isNotBlank()
+                    ) {
+                        Icon(Icons.Default.Search, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.action_search) + " " + stringResource(R.string.field_title) + "/" + stringResource(R.string.field_author) + "/" + stringResource(R.string.field_series))
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
             
-            // Search by ISBN button (always visible)
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = { viewModel.searchByIsbn(isbn) },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = isbn.isNotBlank()
-            ) {
-                Icon(Icons.Default.Search, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.action_search) + " ISBN")
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Title input
-            OutlinedTextField(
-                value = title,
-                onValueChange = { title = it },
-                label = { Text(stringResource(R.string.field_title)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Author input
-            OutlinedTextField(
-                value = author,
-                onValueChange = { author = it },
-                label = { Text(stringResource(R.string.field_author)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Series input
-            OutlinedTextField(
-                value = series,
-                onValueChange = { series = it },
-                label = { Text(stringResource(R.string.field_series)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-            
-            // Search by title/author/series button (always visible)
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = { viewModel.searchByTitleAuthor(title, author, series) },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = title.isNotBlank() || author.isNotBlank() || series.isNotBlank()
-            ) {
-                Icon(Icons.Default.Search, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.action_search) + " " + stringResource(R.string.field_title) + "/" + stringResource(R.string.field_author) + "/" + stringResource(R.string.field_series))
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
+            // Results section
             when (uiState) {
                 is AddBookUiState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
                     }
                 }
                 is AddBookUiState.SearchResults -> {
                     val searchResults = (uiState as AddBookUiState.SearchResults)
                     val results = searchResults.results
                     val alreadyInLibrary = searchResults.alreadyInLibrary
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(results) { book ->
-                            SearchResultItem(
-                                book = book,
-                                isSelected = selectedBooks.contains(book),
-                                isMultiSelectMode = isMultiSelectMode,
-                                isAlreadyInLibrary = alreadyInLibrary[book] ?: false,
-                                onClick = {
-                                    if (isMultiSelectMode) {
-                                        // Toggle selection
-                                        selectedBooks = if (selectedBooks.contains(book)) {
-                                            selectedBooks - book
-                                        } else {
-                                            selectedBooks + book
-                                        }
+                    
+                    items(results) { book ->
+                        SearchResultItem(
+                            book = book,
+                            isSelected = selectedBooks.contains(book),
+                            isMultiSelectMode = isMultiSelectMode,
+                            isAlreadyInLibrary = alreadyInLibrary[book] ?: false,
+                            onClick = {
+                                if (isMultiSelectMode) {
+                                    // Toggle selection
+                                    selectedBooks = if (selectedBooks.contains(book)) {
+                                        selectedBooks - book
                                     } else {
-                                        // Single select - open dialog immediately
-                                        selectedBook = book
-                                        showCategoryDialog = true
+                                        selectedBooks + book
                                     }
-                                },
-                                onLongClick = {
-                                    // Enter multi-select mode
-                                    isMultiSelectMode = true
-                                    selectedBooks = setOf(book)
+                                } else {
+                                    // Single select - open dialog immediately
+                                    selectedBook = book
+                                    showCategoryDialog = true
                                 }
-                            )
-                        }
+                            },
+                            onLongClick = {
+                                // Enter multi-select mode
+                                isMultiSelectMode = true
+                                selectedBooks = setOf(book)
+                            }
+                        )
                     }
                 }
                 is AddBookUiState.Error -> {
-                    Text(
-                        text = (uiState as AddBookUiState.Error).message,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    item {
+                        Text(
+                            text = (uiState as AddBookUiState.Error).message,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
                 else -> {}
             }
@@ -589,6 +660,7 @@ fun CategorySelectionDialog(
     onDismiss: () -> Unit,
     onStatusSelected: (Boolean, Boolean, Int) -> Unit  // (isOwned, isRead, rating)
 ) {
+    val context = LocalContext.current
     var isOwned by remember { mutableStateOf(true) }
     var isRead by remember { mutableStateOf(false) }
     var rating by remember { mutableStateOf(0) }
@@ -683,10 +755,10 @@ fun CategorySelectionDialog(
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = buildString {
-                                    if (existingStatus.first) append("Besessen")
+                                    if (existingStatus.first) append(context.getString(R.string.label_owned_paper))
                                     if (existingStatus.first && existingStatus.second) append(" & ")
-                                    if (existingStatus.second) append("Gelesen")
-                                    if (!existingStatus.first && !existingStatus.second) append("Wunschliste")
+                                    if (existingStatus.second) append(context.getString(R.string.label_read_status))
+                                    if (!existingStatus.first && !existingStatus.second) append(context.getString(R.string.label_wishlist))
                                 },
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -704,7 +776,7 @@ fun CategorySelectionDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Besessen")
+                    Text(stringResource(R.string.label_owned_paper))
                     Switch(
                         checked = isOwned,
                         onCheckedChange = { isOwned = it }
@@ -716,7 +788,7 @@ fun CategorySelectionDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Gelesen")
+                    Text(stringResource(R.string.label_read_status))
                     Switch(
                         checked = isRead,
                         onCheckedChange = { isRead = it }

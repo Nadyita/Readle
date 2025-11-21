@@ -44,7 +44,7 @@ android {
 
     buildTypes {
         debug {
-            applicationIdSuffix = ".debug"
+            // No applicationIdSuffix - use the same package name as release
             versionNameSuffix = "-debug"
         }
         release {

@@ -13,11 +13,13 @@
     <string name="action_delete_book">Delete Book</string>
     <string name="action_delete_selected">Delete Selected</string>
     <string name="action_search">Search</string>
+    <string name="action_scroll_to_search">Scroll to search</string>
     <string name="action_scan_isbn">Scan ISBN</string>
     <string name="action_enter_isbn">Enter ISBN</string>
     <string name="action_search_title_author">Search by Title/Author</string>
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
     <string name="action_upload_to_pocketbook">Upload to PocketBook</string>
     <string name="action_reupload_to_pocketbook">Re-upload to PocketBook</string>
     <string name="action_import">Import</string>
@@ -58,6 +60,9 @@
     <string name="format_xml_description">For manual editing (more readable)</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_scanner">Scanner</string>
+    <string name="settings_section_behavior">Behavior</string>
+    <string name="settings_filter_chips_always_editable_title">Always Editable Status Icons</string>
+    <string name="settings_filter_chips_always_editable_description">Allow changing eBook/Owned/Read status without entering edit mode</string>
     <string name="settings_section_apis">Book Search Services</string>
     <string name="api_dnb_name">Deutsche Nationalbibliothek (DNB)</string>
     <string name="api_google_books_name">Google Books</string>
@@ -82,6 +87,7 @@
     <string name="msg_loading">Loading…</string>
     <string name="msg_error">An error occurred</string>
     <string name="msg_no_results">No results found</string>
+    <string name="msg_book_added_successfully">Book added successfully</string>
     <string name="msg_export_success">Export successful</string>
     <string name="msg_import_success">Import successful</string>
     <string name="msg_camera_permission_required">Camera permission is required to scan barcodes</string>
@@ -137,8 +143,13 @@
     <string name="filter_all">All</string>
     <string name="filter_yes">Yes</string>
     <string name="filter_no">No</string>
-    <string name="filter_owned">Owned:</string>
-    <string name="filter_read">Read:</string>
+    <string name="filter_ebook">eBook</string>
+    <string name="filter_owned">Owned</string>
+    <string name="filter_owned_paper">Paper Book</string>
+    <string name="filter_read">Read</string>
+    <string name="label_owned_paper">Owned (Paper)</string>
+    <string name="label_read_status">Read</string>
+    <string name="label_wishlist">Wishlist</string>
     
     <!-- Sort labels -->
     <string name="sort_title_asc">Title (A-Z)</string>
@@ -247,5 +258,19 @@
     <string name="dialog_unmatched_book_by">by %s</string>
     <string name="dialog_unmatched_book_unknown_author">Unknown</string>
     <string name="dialog_unmatched_book_isbn">ISBN: %s</string>
+    
+    <!-- Book count -->
+    <string name="book_singular">Book</string>
+    <string name="book_plural">Books</string>
+    
+    <!-- Swipe actions -->
+    <string name="swipe_mark_as_read">Mark as read</string>
+    <string name="swipe_mark_as_unread">Mark as unread</string>
+    <string name="swipe_mark_as_owned">Owned (Paper)</string>
+    <string name="swipe_mark_as_not_owned">Not owned (Paper)</string>
+    
+    <!-- FilterChip edit messages -->
+    <string name="msg_cannot_edit_ebook_audiobookshelf">Cannot change eBook status: imported from Audiobookshelf</string>
+    <string name="msg_cannot_edit_not_in_edit_mode">Enable edit mode or "Always editable" in settings to change this</string>
 </resources>
 

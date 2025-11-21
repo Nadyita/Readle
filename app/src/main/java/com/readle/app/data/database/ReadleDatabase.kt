@@ -8,7 +8,7 @@ import com.readle.app.data.model.BookEntity
 
 @Database(
     entities = [BookEntity::class],
-    version = 11,
+    version = 12,
     exportSchema = true
 )
 abstract class ReadleDatabase : RoomDatabase() {
@@ -283,6 +283,19 @@ abstract class ReadleDatabase : RoomDatabase() {
                             -- Keep title as-is if no article detected
                             ELSE title
                         END
+                """.trimIndent())
+            }
+        }
+
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Fix isOwned for eBooks from Audiobookshelf
+                // isOwned should represent paper book ownership, not eBook ownership
+                // All books with audiobookshelfId should have isOwned=false unless manually set
+                database.execSQL("""
+                    UPDATE books 
+                    SET isOwned = 0
+                    WHERE audiobookshelfId IS NOT NULL
                 """.trimIndent())
             }
         }

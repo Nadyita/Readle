@@ -149,6 +149,38 @@ class EditBookViewModel @Inject constructor(
         }
     }
 
+    fun updateBookStatus(bookId: Long, isEBook: Boolean, isOwned: Boolean, isRead: Boolean) {
+        viewModelScope.launch {
+            try {
+                val existingBook = bookRepository.getBookById(bookId)
+                if (existingBook != null) {
+                    val updatedBook = existingBook.copy(
+                        isEBook = isEBook,
+                        isOwned = isOwned,
+                        isRead = isRead
+                    )
+                    bookRepository.updateBook(updatedBook)
+                    // Don't change UI state - just silently update the book
+                }
+            } catch (e: Exception) {
+                // Silently fail - status update is not critical
+            }
+        }
+    }
+    
+    fun deleteBook(bookId: Long) {
+        viewModelScope.launch {
+            try {
+                val book = bookRepository.getBookById(bookId)
+                if (book != null) {
+                    bookRepository.deleteBook(book)
+                }
+            } catch (e: Exception) {
+                // Handle error if needed
+            }
+        }
+    }
+
     fun resetState() {
         _uiState.value = EditBookUiState.Idle
     }

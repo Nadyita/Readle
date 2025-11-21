@@ -93,6 +93,7 @@ fun SettingsScreen(
     val pocketbookSyncState by viewModel.pocketbookSyncState.collectAsState()
     val pocketbookCleanTitles by viewModel.pocketbookCleanTitles.collectAsState()
     val lastAudiobookshelfSyncTime by viewModel.lastAudiobookshelfSyncTime.collectAsState()
+    val filterChipsAlwaysEditable by viewModel.filterChipsAlwaysEditable.collectAsState()
     
     // Email settings
     val smtpServer by viewModel.smtpServer.collectAsState()
@@ -443,6 +444,46 @@ fun SettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Behavior Settings Section
+            Text(
+                text = stringResource(R.string.settings_section_behavior),
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.settings_filter_chips_always_editable_title),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = stringResource(R.string.settings_filter_chips_always_editable_description),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = filterChipsAlwaysEditable,
+                        onCheckedChange = { viewModel.setFilterChipsAlwaysEditable(it) }
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 

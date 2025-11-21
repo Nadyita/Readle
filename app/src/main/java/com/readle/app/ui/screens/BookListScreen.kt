@@ -50,7 +50,8 @@ import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Undo
-import com.readle.app.ui.icons.Newsstand
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -90,6 +91,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -197,65 +199,49 @@ fun BookListScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Row(
+                    TextField(
+                        value = viewFilter,
+                        onValueChange = { viewModel.setViewFilter(it) },
+                        placeholder = { 
+                            Text(
+                                text = stringResource(R.string.hint_filter_category),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = stringResource(R.string.cd_filter),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
+                        singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(R.string.app_name),
-                            modifier = Modifier.padding(end = 4.dp)
-                        )
-                        Text(
-                            text = "(${books.size})",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        
-                        TextField(
-                            value = viewFilter,
-                            onValueChange = { viewModel.setViewFilter(it) },
-                            placeholder = { 
-                                Text(
-                                    text = stringResource(R.string.hint_filter_category),
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Search,
-                                    contentDescription = stringResource(R.string.cd_filter),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            disabledContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            disabledIndicatorColor = Color.Transparent,
+                        ),
+                        trailingIcon = {
+                            if (viewFilter.isNotEmpty()) {
+                                IconButton(
+                                    onClick = { viewModel.setViewFilter("") },
                                     modifier = Modifier.size(20.dp)
-                                )
-                            },
-                            singleLine = true,
-                            modifier = Modifier.weight(1f),
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                disabledContainerColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                                disabledIndicatorColor = Color.Transparent,
-                            ),
-                            trailingIcon = {
-                                if (viewFilter.isNotEmpty()) {
-                                    IconButton(
-                                        onClick = { viewModel.setViewFilter("") },
-                                        modifier = Modifier.size(20.dp)
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Close,
-                                            contentDescription = stringResource(R.string.cd_clear_filter),
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
+                                ) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = stringResource(R.string.cd_clear_filter),
+                                        modifier = Modifier.size(16.dp)
+                                    )
                                 }
-                            },
-                            textStyle = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+                            }
+                        },
+                        textStyle = MaterialTheme.typography.bodyMedium
+                    )
                 },
                 actions = {
                     // Sort button
@@ -323,7 +309,9 @@ fun BookListScreen(
             if (selectedBooks.isNotEmpty()) {
                 // Determine action based on current state of selected books
                 val selectedBookEntities = books.filter { selectedBooks.contains(it.id) }
-                val allAreOwned = selectedBookEntities.all { it.isOwned }
+                // Filter out eBooks when checking owned status (eBooks are always owned)
+                val toggleableBooks = selectedBookEntities.filter { !it.isEBook }
+                val allAreOwned = toggleableBooks.all { it.isOwned }
                 val allAreRead = selectedBookEntities.all { it.isRead }
                 
                 // If all are owned/read, action will be to set to false. Otherwise, set to true.
@@ -352,7 +340,7 @@ fun BookListScreen(
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     ) {
                         Icon(
-                            imageVector = if (willSetOwnedTo) Icons.Filled.Newsstand else Icons.Default.Remove,
+                            imageVector = if (willSetOwnedTo) Icons.Filled.MenuBook else Icons.Default.Remove,
                             contentDescription = if (willSetOwnedTo) "Mark as owned" else "Mark as not owned",
                             modifier = Modifier.size(20.dp)
                         )
@@ -433,6 +421,13 @@ fun BookListScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // Book count
+                Text(
+                    text = "${books.size} ${if (books.size == 1) stringResource(R.string.book_singular) else stringResource(R.string.book_plural)}",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                
                 // Owned Filter Row
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -652,7 +647,7 @@ fun BookListItem(
     val swipeableState = rememberSwipeableState(initialValue = 0)
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current
-    val swipeThresholdPx = with(density) { 100.dp.toPx() }
+    val swipeThresholdPx = with(density) { 200.dp.toPx() } // Increased from 100dp to allow more swipe distance
     
     val anchors = mapOf(
         -swipeThresholdPx to -1,  // Swipe left → toggle owned
@@ -692,11 +687,11 @@ fun BookListItem(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Left side: Check/Close icon (visually on left, but swipe RIGHT toggles READ)
+            // Left side: Check/Close icon with text (visually on left, but swipe RIGHT toggles READ)
             // Green background if marking as read, red background if marking as unread
-            Box(
+            Row(
                 modifier = Modifier
-                    .size(60.dp)
+                    .padding(end = 16.dp)
                     .background(
                         if (book.isRead) {
                             Color(0xFFEF5350).copy(alpha = 0.7f) // Red for "mark as unread"
@@ -704,22 +699,33 @@ fun BookListItem(
                             Color(0xFF66BB6A).copy(alpha = 0.7f) // Green for "mark as read"
                         },
                         shape = MaterialTheme.shapes.small
-                    ),
-                contentAlignment = Alignment.Center
+                    )
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(
                     imageVector = if (book.isRead) Icons.Default.Close else Icons.Default.Check,
                     contentDescription = "Toggle Read (swipe right)",
                     tint = Color.White,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(24.dp)
+                )
+                Text(
+                    text = stringResource(
+                        if (book.isRead) R.string.swipe_mark_as_unread 
+                        else R.string.swipe_mark_as_read
+                    ),
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
                 )
             }
             
-            // Right side: Newsstand icon (visually on right, but swipe LEFT toggles OWNED)
+            // Right side: MenuBook icon with text (visually on right, but swipe LEFT toggles OWNED)
             // Green background if marking as owned, red background if marking as not owned
-            Box(
+            Row(
                 modifier = Modifier
-                    .size(60.dp)
+                    .padding(start = 16.dp)
                     .background(
                         if (book.isOwned) {
                             Color(0xFFEF5350).copy(alpha = 0.7f) // Red for "mark as not owned"
@@ -727,14 +733,25 @@ fun BookListItem(
                             Color(0xFF66BB6A).copy(alpha = 0.7f) // Green for "mark as owned"
                         },
                         shape = MaterialTheme.shapes.small
-                    ),
-                contentAlignment = Alignment.Center
+                    )
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                Text(
+                    text = stringResource(
+                        if (book.isOwned) R.string.swipe_mark_as_not_owned 
+                        else R.string.swipe_mark_as_owned
+                    ),
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
                 Icon(
-                    imageVector = Icons.Filled.Newsstand,
+                    imageVector = Icons.Filled.MenuBook,
                     contentDescription = "Toggle Owned (swipe left)",
                     tint = Color.White,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
@@ -765,11 +782,20 @@ fun BookListItem(
                         .padding(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    // Owned icon
+                    // eBook icon
+                    if (book.isEBook) {
+                        Icon(
+                            painter = painterResource(R.drawable.ereader_ebook),
+                            contentDescription = "eBook",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                        )
+                    }
+                    // Paper book icon (can be shown together with eBook)
                     if (book.isOwned) {
                         Icon(
-                            imageVector = Icons.Filled.Newsstand,
-                            contentDescription = "Owned",
+                            imageVector = Icons.Filled.MenuBook,
+                            contentDescription = "Paper Book",
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                         )
@@ -811,7 +837,7 @@ fun BookListItem(
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .padding(end = 44.dp) // Space for max 2 icons (16dp each + 4dp gap + 8dp margin)
+                            .padding(end = 68.dp) // Space for max 4 icons (eBook, Paper, Read, Cloud): 16dp each + 4dp gap + 8dp margin
                     ) {
                         Text(
                             text = book.title,

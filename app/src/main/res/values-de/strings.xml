@@ -13,11 +13,13 @@
     <string name="action_delete_book">Buch löschen</string>
     <string name="action_delete_selected">Ausgewählte löschen</string>
     <string name="action_search">Suchen</string>
+    <string name="action_scroll_to_search">Zur Suche scrollen</string>
     <string name="action_scan_isbn">ISBN scannen</string>
     <string name="action_enter_isbn">ISBN eingeben</string>
     <string name="action_search_title_author">Nach Titel/Autor suchen</string>
     <string name="action_save">Speichern</string>
     <string name="action_cancel">Abbrechen</string>
+    <string name="action_delete">Löschen</string>
     <string name="action_upload_to_pocketbook">Zu PocketBook hochladen</string>
     <string name="action_reupload_to_pocketbook">Erneut zu PocketBook hochladen</string>
     <string name="action_import">Importieren</string>
@@ -58,6 +60,9 @@
     <string name="format_xml_description">Für manuelle Bearbeitung (besser lesbar)</string>
     <string name="settings_section_appearance">Erscheinungsbild</string>
     <string name="settings_section_scanner">Scanner</string>
+    <string name="settings_section_behavior">Verhalten</string>
+    <string name="settings_filter_chips_always_editable_title">Status-Icons immer editierbar</string>
+    <string name="settings_filter_chips_always_editable_description">Erlaube Änderungen von eBook/Besitz/Gelesen-Status ohne Edit-Modus</string>
     <string name="settings_section_apis">Dienste zur Buchsuche</string>
     <string name="api_dnb_name">Deutsche Nationalbibliothek (DNB)</string>
     <string name="api_google_books_name">Google Books</string>
@@ -82,6 +87,7 @@
     <string name="msg_loading">Lädt…</string>
     <string name="msg_error">Ein Fehler ist aufgetreten</string>
     <string name="msg_no_results">Keine Ergebnisse gefunden</string>
+    <string name="msg_book_added_successfully">Buch erfolgreich hinzugefügt</string>
     <string name="msg_export_success">Export erfolgreich</string>
     <string name="msg_import_success">Import erfolgreich</string>
     <string name="msg_camera_permission_required">Kamera-Berechtigung ist erforderlich, um Barcodes zu scannen</string>
@@ -137,8 +143,13 @@
     <string name="filter_all">Egal</string>
     <string name="filter_yes">Ja</string>
     <string name="filter_no">Nein</string>
-    <string name="filter_owned">Besitz:</string>
-    <string name="filter_read">Gelesen:</string>
+    <string name="filter_ebook">eBook</string>
+    <string name="filter_owned">Besitz</string>
+    <string name="filter_owned_paper">Papierbuch</string>
+    <string name="filter_read">Gelesen</string>
+    <string name="label_owned_paper">Besitze ich (Papierbuch)</string>
+    <string name="label_read_status">Gelesen</string>
+    <string name="label_wishlist">Wunschliste</string>
     
     <!-- Sort labels -->
     <string name="sort_title_asc">Titel (A-Z)</string>
@@ -247,5 +258,19 @@
     <string name="dialog_unmatched_book_by">von %s</string>
     <string name="dialog_unmatched_book_unknown_author">Unbekannt</string>
     <string name="dialog_unmatched_book_isbn">ISBN: %s</string>
+    
+    <!-- Book count -->
+    <string name="book_singular">Buch</string>
+    <string name="book_plural">Bücher</string>
+    
+    <!-- Swipe actions -->
+    <string name="swipe_mark_as_read">Als gelesen markieren</string>
+    <string name="swipe_mark_as_unread">Als ungelesen markieren</string>
+    <string name="swipe_mark_as_owned">Besitze ich (Papierbuch)</string>
+    <string name="swipe_mark_as_not_owned">Besitze ich nicht (Papierbuch)</string>
+    
+    <!-- FilterChip edit messages -->
+    <string name="msg_cannot_edit_ebook_audiobookshelf">eBook-Status kann nicht geändert werden: von Audiobookshelf importiert</string>
+    <string name="msg_cannot_edit_not_in_edit_mode">Bearbeitungsmodus aktivieren oder \"Immer editierbar\" in den Einstellungen, um dies zu ändern</string>
 </resources>
 
