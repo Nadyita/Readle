@@ -93,6 +93,10 @@ fun AddBookScreen(
     var selectedBooks by remember { mutableStateOf<Set<BookSearchResult>>(emptySet()) }
     var isMultiSelectMode by remember { mutableStateOf(false) }
     
+    // Track which search button was clicked
+    var isSearchingIsbn by remember { mutableStateOf(false) }
+    var isSearchingTitleAuthor by remember { mutableStateOf(false) }
+    
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val listState = rememberLazyListState()
@@ -156,9 +160,15 @@ fun AddBookScreen(
                 }
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                 focusManager.clearFocus()
+                // Reset search button states
+                isSearchingIsbn = false
+                isSearchingTitleAuthor = false
             }
             is AddBookUiState.Error -> {
                 focusManager.clearFocus()
+                // Reset search button states
+                isSearchingIsbn = false
+                isSearchingTitleAuthor = false
             }
             else -> {}
         }
@@ -277,12 +287,23 @@ fun AddBookScreen(
                     // Search by ISBN button
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
-                        onClick = { viewModel.searchByIsbn(isbn) },
+                        onClick = { 
+                            isSearchingIsbn = true
+                            viewModel.searchByIsbn(isbn) 
+                        },
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = isbn.isNotBlank()
+                        enabled = isbn.isNotBlank() && uiState !is AddBookUiState.Loading
                     ) {
-                        Icon(Icons.Default.Search, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
+                        if (uiState is AddBookUiState.Loading && isSearchingIsbn) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        } else {
+                            Icon(Icons.Default.Search, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
                         Text(stringResource(R.string.action_search) + " ISBN")
                     }
                     
@@ -322,12 +343,24 @@ fun AddBookScreen(
                     // Search by title/author/series button
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
-                        onClick = { viewModel.searchByTitleAuthor(title, author, series) },
+                        onClick = { 
+                            isSearchingTitleAuthor = true
+                            viewModel.searchByTitleAuthor(title, author, series) 
+                        },
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = title.isNotBlank() || author.isNotBlank() || series.isNotBlank()
+                        enabled = (title.isNotBlank() || author.isNotBlank() || series.isNotBlank()) && 
+                                  uiState !is AddBookUiState.Loading
                     ) {
-                        Icon(Icons.Default.Search, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
+                        if (uiState is AddBookUiState.Loading && isSearchingTitleAuthor) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        } else {
+                            Icon(Icons.Default.Search, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
                         Text(stringResource(R.string.action_search) + " " + stringResource(R.string.field_title) + "/" + stringResource(R.string.field_author) + "/" + stringResource(R.string.field_series))
                     }
                     

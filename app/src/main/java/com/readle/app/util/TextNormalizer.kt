@@ -123,6 +123,50 @@ object TextNormalizer {
     }
     
     /**
+     * Cleans up book titles for manually imported (non-eBook) books.
+     * This is more aggressive than normalizeTitle() and is only applied to physical books.
+     * 
+     * Rules:
+     * 1. Remove surrounding quotes if the entire title is quoted
+     * 2. Remove trailing ": Roman" (German for ": Novel")
+     * 
+     * Examples:
+     * - "Der Schwarm" -> Der Schwarm
+     * - "Die Haarteppichknüpfer: Roman" -> Die Haarteppichknüpfer
+     * - "Der kleine Prinz": Roman -> Der kleine Prinz
+     */
+    fun cleanupManualImportTitle(title: String): String {
+        var cleaned = title.trim()
+        
+        // Remove surrounding quotes if entire title is quoted
+        val quoteChars = listOf(
+            Pair('"', '"'),           // Standard quotes
+            Pair('\u201C', '\u201D'), // Curly quotes "..."
+            Pair('\u201E', '\u201D'), // German quotes „..."
+            Pair('\u00AB', '\u00BB'), // Guillemets «...»
+            Pair('\u2039', '\u203A')  // Single guillemets ‹...›
+        )
+        
+        for ((open, close) in quoteChars) {
+            if (cleaned.startsWith(open) && cleaned.endsWith(close) && cleaned.length > 2) {
+                cleaned = cleaned.substring(1, cleaned.length - 1).trim()
+                break
+            }
+        }
+        
+        // Remove trailing ": Roman" (case-insensitive)
+        val romanSuffixes = listOf(": Roman", ": roman", ": ROMAN")
+        for (suffix in romanSuffixes) {
+            if (cleaned.endsWith(suffix, ignoreCase = true)) {
+                cleaned = cleaned.substring(0, cleaned.length - suffix.length).trim()
+                break
+            }
+        }
+        
+        return cleaned
+    }
+    
+    /**
      * Normalizes book titles by moving leading articles to the end.
      * Examples:
      * - "Die Haarteppichknüpfer" -> "Haarteppichknüpfer, Die"

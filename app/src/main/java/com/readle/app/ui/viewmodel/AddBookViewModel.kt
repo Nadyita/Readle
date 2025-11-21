@@ -44,7 +44,14 @@ class AddBookViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = AddBookUiState.Loading
             try {
-                val results = bookSearchRepository.searchByIsbn(isbn)
+                val rawResults = bookSearchRepository.searchByIsbn(isbn)
+                
+                // Normalize results before displaying
+                val normalizedResults = rawResults.map { normalizeSearchResult(it) }
+                
+                // Remove duplicates based on normalized title and author
+                val results = deduplicateResults(normalizedResults)
+                
                 if (results.isEmpty()) {
                     _uiState.value = AddBookUiState.Error("No books found")
                 } else {
@@ -70,7 +77,14 @@ class AddBookViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = AddBookUiState.Loading
             try {
-                val results = bookSearchRepository.searchByTitleAuthor(title, author, series)
+                val rawResults = bookSearchRepository.searchByTitleAuthor(title, author, series)
+                
+                // Normalize results before displaying
+                val normalizedResults = rawResults.map { normalizeSearchResult(it) }
+                
+                // Remove duplicates based on normalized title and author
+                val results = deduplicateResults(normalizedResults)
+                
                 if (results.isEmpty()) {
                     _uiState.value = AddBookUiState.Error("No books found")
                 } else {
@@ -90,6 +104,36 @@ class AddBookViewModel @Inject constructor(
                 _uiState.value = AddBookUiState.Error(e.message ?: "Unknown error")
             }
         }
+    }
+    
+    /**
+     * Removes duplicate search results based on normalized title and author.
+     * Keeps the first occurrence of each unique book (by title + author combination).
+     */
+    private fun deduplicateResults(results: List<BookSearchResult>): List<BookSearchResult> {
+        val seen = mutableSetOf<Pair<String, String>>()
+        return results.filter { result ->
+            val key = Pair(result.title.lowercase().trim(), result.author.lowercase().trim())
+            seen.add(key)
+        }
+    }
+    
+    /**
+     * Normalizes a search result by cleaning up and normalizing the title and author.
+     * This is applied to search results before displaying them to the user.
+     */
+    private fun normalizeSearchResult(result: BookSearchResult): BookSearchResult {
+        // Clean up title (removes quotes and ": Roman" suffix)
+        val cleanedTitle = com.readle.app.util.TextNormalizer.cleanupManualImportTitle(result.title)
+        
+        // Normalize title and author
+        val normalizedTitle = com.readle.app.util.TextNormalizer.normalizeTitle(cleanedTitle)
+        val normalizedAuthor = com.readle.app.util.TextNormalizer.normalizeAuthor(result.author)
+        
+        return result.copy(
+            title = normalizedTitle,
+            author = normalizedAuthor
+        )
     }
     
     /**
@@ -247,6 +291,11 @@ class AddBookViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = AddBookUiState.Loading
             try {
+                // Book is already normalized in the search results,
+                // but store the original title/author for comparison
+                val originalTitle = book.title
+                val originalAuthor = book.author
+                
                 val bookEntity = BookEntity(
                     title = book.title,
                     author = book.author,
@@ -268,7 +317,10 @@ class AddBookViewModel @Inject constructor(
                     titleSort = com.readle.app.util.TextNormalizer.normalizeTitleForSorting(
                         book.title,
                         book.language
-                    )
+                    ),
+                    // Store original values for search/comparison
+                    originalTitle = originalTitle,
+                    originalAuthor = originalAuthor
                 )
 
                 bookRepository.insertBook(bookEntity)

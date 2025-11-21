@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -121,6 +122,8 @@ fun BookListScreen(
     val viewFilter by viewModel.viewFilter.collectAsState()
     val uploadState by viewModel.uploadState.collectAsState()
     val lastSwipeAction by viewModel.lastSwipeAction.collectAsState()
+    
+    val listState = rememberLazyListState()
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showOptionsMenu by remember { mutableStateOf(false) }
@@ -151,6 +154,13 @@ fun BookListScreen(
     // Check if Pocketbook credentials are set
     LaunchedEffect(Unit) {
         hasPocketbookCreds = viewModel.hasPocketbookCredentials()
+    }
+    
+    // Scroll to top when filter results change
+    LaunchedEffect(books.size, ownedFilter, readFilter, viewFilter) {
+        if (listState.firstVisibleItemIndex > 0) {
+            listState.scrollToItem(0)
+        }
     }
 
     // Handle upload state changes
@@ -496,6 +506,7 @@ fun BookListScreen(
                 }
             } else {
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
