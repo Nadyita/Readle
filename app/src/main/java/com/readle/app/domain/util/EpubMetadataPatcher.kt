@@ -110,7 +110,7 @@ class EpubMetadataPatcher {
         /**
          * Patches OPF content based on EPUB version
          */
-        private fun patchOPFContent(opfContent: String, cleanedTitle: String?): String {
+        internal fun patchOPFContent(opfContent: String, cleanedTitle: String?): String {
             // Detect EPUB version
             val versionRegex = """<package[^>]+version="([^"]+)"""".toRegex()
             val versionMatch = versionRegex.find(opfContent)
@@ -318,10 +318,13 @@ class EpubMetadataPatcher {
             // General rule: <meta> tags with 'property' OR 'refines' attributes need opf: prefix
             // Exception: <meta property="dcterms:..."> and <meta property="calibre:..."> stay as <meta>
 
-            // Opening tags
-            val metaPropertyRegex = """<meta(\s+[^>]*(?:property|refines)="[^"]*"[^>]*)>""".toRegex()
-            patched = metaPropertyRegex.replace(patched) { matchResult ->
+            // Match complete <meta>...</meta> tags (both self-closing and with content)
+            // Pattern matches: <meta attributes>content</meta> or <meta attributes/>
+            val metaTagRegex = """<meta(\s+[^>]*(?:property|refines)="[^"]*"[^>]*)(?:>(.*?)</meta>|/>)""".toRegex(RegexOption.DOT_MATCHES_ALL)
+            
+            patched = metaTagRegex.replace(patched) { matchResult ->
                 val attributes = matchResult.groupValues[1]
+                val content = matchResult.groupValues[2] // Empty if self-closing
                 val fullMatch = matchResult.value
                 
                 // Skip if already has opf: prefix
@@ -334,33 +337,19 @@ class EpubMetadataPatcher {
                     return@replace fullMatch
                 }
                 
-                // Skip if property starts with dcterms: or calibre: (based on the working example)
+                // Skip if property starts with dcterms: or calibre:
                 if (attributes.contains("""property="dcterms:""") || 
                     attributes.contains("""property="calibre:""")) {
                     return@replace fullMatch
                 }
                 
-                // Convert to opf:meta
-                "<opf:meta$attributes>"
-            }
-
-            // Closing tags - need to match the opening tags we converted
-            // Count how many <opf:meta> vs </opf:meta> we have
-            val opfMetaOpenCount = """<opf:meta\s""".toRegex().findAll(patched).count()
-            val opfMetaCloseCount = """</opf:meta>""".toRegex().findAll(patched).count()
-            val plainMetaCloseCount = """</meta>""".toRegex().findAll(patched).count()
-            
-            // Replace the difference
-            val toReplace = opfMetaOpenCount - opfMetaCloseCount
-            if (toReplace > 0) {
-                var replaced = 0
-                patched = """</meta>""".toRegex().replace(patched) { matchResult ->
-                    if (replaced < toReplace) {
-                        replaced++
-                        "</opf:meta>"
-                    } else {
-                        matchResult.value
-                    }
+                // Convert to opf:meta (handle both self-closing and with content)
+                if (content.isEmpty() && fullMatch.endsWith("/>")) {
+                    // Self-closing tag
+                    "<opf:meta$attributes/>"
+                } else {
+                    // Tag with content
+                    "<opf:meta$attributes>$content</opf:meta>"
                 }
             }
 
