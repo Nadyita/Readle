@@ -204,7 +204,9 @@ class SyncPocketbookUseCase @Inject constructor(
                         // If book has >= 90% progress in Pocketbook, mark as READ
                         if (pbBook.readPercent >= 90) {
                             if (!matchedBook.isRead) {
-                                updatedBook = updatedBook.copy(isRead = true, isOwned = true)
+                                // Only update isRead status, keep isOwned unchanged
+                                // (isOwned represents physical book ownership, not affected by reading status)
+                                updatedBook = updatedBook.copy(isRead = true)
                                 booksUpdated++
                                 android.util.Log.d(
                                     "PocketbookSync",
