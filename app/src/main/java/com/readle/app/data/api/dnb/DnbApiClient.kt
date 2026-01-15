@@ -29,6 +29,30 @@ class DnbApiClient @Inject constructor(
         }
     }
 
+    /**
+     * Builds a DNB query for a search field.
+     * - If the input is wrapped in quotes (e.g., "Harry Potter"), uses phrase search: field="Harry Potter"
+     * - Otherwise, splits into words and searches for each: field=Harry and field=Potter
+     */
+    private fun buildTitleQuery(input: String, field: String = "tit"): String {
+        val trimmed = input.trim()
+        
+        // Check if the input is wrapped in quotes (phrase search)
+        if (trimmed.startsWith("\"") && trimmed.endsWith("\"") && trimmed.length > 2) {
+            // Keep as phrase search, the quotes are already there
+            return "$field=$trimmed"
+        }
+        
+        // Split into words and create individual search terms
+        val words = trimmed.split(Regex("\\s+")).filter { it.isNotBlank() }
+        
+        return if (words.size == 1) {
+            "$field=${words[0]}"
+        } else {
+            words.joinToString(" and ") { "$field=$it" }
+        }
+    }
+
     suspend fun searchByTitleAuthor(
         title: String? = null,
         author: String? = null,
@@ -37,14 +61,14 @@ class DnbApiClient @Inject constructor(
         return try {
             val queryParts = mutableListOf<String>()
             if (!title.isNullOrBlank()) {
-                queryParts.add("tit=\"${title.trim()}\"")
+                queryParts.add(buildTitleQuery(title.trim()))
             }
             if (!author.isNullOrBlank()) {
-                queryParts.add("per=\"${author.trim()}\"")
+                queryParts.add(buildTitleQuery(author.trim(), "per"))
             }
             // DNB doesn't support 'ser' index, so search series in title instead
             if (!series.isNullOrBlank() && title.isNullOrBlank()) {
-                queryParts.add("tit=\"${series.trim()}\"")
+                queryParts.add(buildTitleQuery(series.trim()))
             }
 
             if (queryParts.isEmpty()) {
